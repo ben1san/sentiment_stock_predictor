@@ -1,4 +1,4 @@
-## 技術スタック
+## 技術スタックたち
 
 ### Backend (Python)
 - **データ取得・処理**: `yfinance`, `pandas`, `numpy`
