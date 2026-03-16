@@ -1,7 +1,7 @@
 import os
-import praw
 import json
 import logging
+import requests
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -18,33 +18,45 @@ def fetch_reddit_posts(ticker: str = "NVDA", limit: int = 10) -> list:
         with open(MOCK_FILE_PATH, "r") as f:
             return json.load(f)
 
-    # 実際のReddit API呼び出し
-    try:
-        reddit = praw.Reddit(
-            client_id=os.getenv("REDDIT_CLIENT_ID"),
-            client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
-            user_agent="HackathonApp:HelloWallStreet:v1.0"
-        )
+    # プランB: APIキー不要の .json エンドポイントを直接叩く
+    # restrict_sr=1 でサブレディット内検索に限定
+    url = f"https://www.reddit.com/r/wallstreetbets/search.json?q={ticker}&restrict_sr=1&sort=new&limit={limit}"
+    
+    # Redditに弾かれないよう、適当なUser-Agentを設定（必須）
+    headers = {
+        'User-Agent': 'macos:hellowallstreet.hackathon:v1.0 (by /u/che_vi)'
+    }
 
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status() # エラーなら例外を投げる
+        
+        data = response.json()
         posts_data = []
-        for sub in reddit.subreddit("wallstreetbets").search(ticker, sort='new', limit=limit):
-            # 画像かどうかの簡単なヒューリスティック判定
-            is_image = bool(sub.url) and any(
-                domain in sub.url.lower() for domain in ['i.redd.it', 'imgur.com', '.jpg', '.png', '.jpeg']
+        
+        # JSONの構造をパースして必要な情報だけ抽出
+        for child in data.get('data', {}).get('children', []):
+            post = child.get('data', {})
+            post_url = post.get('url', '')
+            
+            # 画像かどうかの判定
+            is_image = bool(post_url) and any(
+                domain in post_url.lower() for domain in ['i.redd.it', 'imgur.com', '.jpg', '.png', '.jpeg']
             )
             
             posts_data.append({
-                "Date": datetime.utcfromtimestamp(sub.created_utc).strftime('%Y-%m-%d %H:%M:%S'),
-                "Title": sub.title,
-                "Body": sub.selftext,
-                "Score": sub.score,
-                "URL": sub.url if is_image else None,
+                "Date": datetime.utcfromtimestamp(post.get('created_utc', 0)).strftime('%Y-%m-%d %H:%M:%S'),
+                "Title": post.get('title', ''),
+                "Body": post.get('selftext', ''),
+                "Score": post.get('score', 0),
+                "URL": post_url if is_image else None,
                 "Is_Meme": is_image
             })
+            
         return posts_data
 
     except Exception as e:
-        logger.error(f"Reddit API Error: {e}. Falling back to mock data.")
-        # 審査員の前で絶対にエラー画面を出さないための防衛機構
+        logger.error(f"Reddit JSON Fetch Error: {e}. Falling back to mock data.")
+        # 429 Too Many Requests 等で弾かれたら、即座にモックに切り替えてデモを死守
         with open(MOCK_FILE_PATH, "r") as f:
             return json.load(f)
