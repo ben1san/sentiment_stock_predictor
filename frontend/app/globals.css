@@ -2,34 +2,44 @@
 
 /* ============================================================
    Sentiment Stock Predictor - グローバルスタイル
-   ダークモード専用 / グラスモーフィズム / プレミアムデザイン
+   Cyber-Finance / Minimal Futuristic ダークモード
    ============================================================ */
 
 :root {
-  --bg-primary: #070b14;
-  --bg-secondary: #0d1526;
-  --bg-card: rgba(13, 21, 38, 0.7);
-  --bg-glass: rgba(255, 255, 255, 0.04);
+  /* 背景 */
+  --bg-primary: #05080A;
+  --bg-secondary: #0a0f18;
+  --bg-card: rgba(10, 15, 24, 0.8);
+  --bg-glass: rgba(255, 255, 255, 0.03);
 
-  --accent-blue: #3b82f6;
-  --accent-blue-glow: rgba(59, 130, 246, 0.3);
+  /* アクセント */
+  --accent-blue: #38bdf8;
+  --accent-blue-glow: rgba(56, 189, 248, 0.25);
   --accent-green: #10b981;
   --accent-green-glow: rgba(16, 185, 129, 0.3);
-  --accent-red: #ef4444;
-  --accent-red-glow: rgba(239, 68, 68, 0.3);
+  --accent-emerald: #34d399;
+  --accent-emerald-glow: rgba(52, 211, 153, 0.3);
+  --accent-red: #f43f5e;
+  --accent-red-glow: rgba(244, 63, 94, 0.3);
   --accent-amber: #f59e0b;
+  --accent-cyan: #22d3ee;
 
-  --text-primary: #f0f4ff;
-  --text-secondary: #8b9ab8;
-  --text-muted: #4a5568;
+  /* テキスト */
+  --text-primary: #e8f0fe;
+  --text-secondary: #7b91b5;
+  --text-muted: #3d4f6b;
 
+  /* ボーダー */
   --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-accent: rgba(59, 130, 246, 0.25);
+  --border-accent: rgba(56, 189, 248, 0.2);
+  --border-green: rgba(52, 211, 153, 0.2);
 
-  --gradient-blue: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  /* グラデーション */
+  --gradient-blue: linear-gradient(135deg, #0f3460 0%, #38bdf8 100%);
   --gradient-green: linear-gradient(135deg, #064e3b 0%, #10b981 100%);
-  --gradient-red: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
-  --gradient-hero: linear-gradient(135deg, #070b14 0%, #0d1a3a 50%, #070b14 100%);
+  --gradient-red: linear-gradient(135deg, #4c0519 0%, #f43f5e 100%);
+  --gradient-hero: linear-gradient(135deg, #05080A 0%, #070f1e 50%, #05080A 100%);
+  --gradient-cyber: linear-gradient(135deg, #0d1b2a 0%, #1a2744 50%, #0d1b2a 100%);
 }
 
 /* ── ベースリセット ── */
@@ -57,9 +67,9 @@ body {
 
 /* ── グラスカード ── */
 .glass-card {
-  background: var(--bg-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(10, 15, 28, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--border-subtle);
   border-radius: 16px;
   transition: border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
@@ -67,21 +77,38 @@ body {
 
 .glass-card:hover {
   border-color: var(--border-accent);
-  transform: translateY(-2px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 30px var(--accent-blue-glow);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.06);
 }
 
 /* ── グローエフェクト ── */
-.glow-blue  { box-shadow: 0 0 30px var(--accent-blue-glow); }
-.glow-green { box-shadow: 0 0 30px var(--accent-green-glow); }
-.glow-red   { box-shadow: 0 0 30px var(--accent-red-glow); }
+.glow-blue  { box-shadow: 0 0 40px rgba(56, 189, 248, 0.15), inset 0 0 20px rgba(56, 189, 248, 0.03); }
+.glow-green { box-shadow: 0 0 40px rgba(52, 211, 153, 0.15), inset 0 0 20px rgba(52, 211, 153, 0.03); }
+.glow-red   { box-shadow: 0 0 40px rgba(244, 63, 94, 0.15), inset 0 0 20px rgba(244, 63, 94, 0.03); }
+.glow-emerald { box-shadow: 0 0 60px rgba(52, 211, 153, 0.2); }
 
 /* ── グラデーションテキスト ── */
 .gradient-text {
-  background: linear-gradient(90deg, #60a5fa, #a78bfa, #34d399);
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #34d399);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.gradient-text-green {
+  background: linear-gradient(90deg, #34d399, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── スキャンラインエフェクト ── */
+.scan-line::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+  animation: scan 3s linear infinite;
 }
 
 /* ── アニメーション ── */
@@ -90,9 +117,14 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 @keyframes pulse-glow {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.6; }
+  0%, 100% { opacity: 1; box-shadow: 0 0 6px currentColor; }
+  50%       { opacity: 0.7; box-shadow: 0 0 12px currentColor; }
 }
 
 @keyframes spin-slow {
@@ -105,8 +137,42 @@ body {
   100% { background-position: 200% 0; }
 }
 
+@keyframes scan {
+  0%   { top: 0%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+
+@keyframes typing-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes data-flow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes neon-flicker {
+  0%, 95%, 100% { opacity: 1; }
+  96%  { opacity: 0.8; }
+  97%  { opacity: 1; }
+  98%  { opacity: 0.6; }
+  99%  { opacity: 1; }
+}
+
+@keyframes gauge-fill {
+  from { stroke-dashoffset: 283; }
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.6s ease forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
 }
 
 .animate-pulse-glow {
@@ -117,12 +183,16 @@ body {
   animation: spin-slow 3s linear infinite;
 }
 
+.animate-neon-flicker {
+  animation: neon-flicker 5s ease-in-out infinite;
+}
+
 /* スケルトンローダー */
 .skeleton {
   background: linear-gradient(
     90deg,
     var(--bg-secondary) 25%,
-    rgba(59, 130, 246, 0.08) 50%,
+    rgba(56, 189, 248, 0.06) 50%,
     var(--bg-secondary) 75%
   );
   background-size: 200% 100%;
@@ -131,33 +201,44 @@ body {
 }
 
 /* ── スクロールバー ── */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg-primary); }
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-blue);
-  border-radius: 3px;
-  opacity: 0.5;
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 2px;
 }
-::-webkit-scrollbar-thumb:hover { opacity: 1; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-blue); }
 
 /* ── ボタン ── */
 .btn-primary {
-  background: var(--gradient-blue);
+  background: linear-gradient(135deg, #0f3460 0%, #38bdf8 100%);
   color: white;
   border: none;
   border-radius: 10px;
-  padding: 10px 24px;
+  padding: 12px 24px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
   letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
 }
 
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover::before { opacity: 1; }
+
 .btn-primary:hover {
-  opacity: 0.9;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px var(--accent-blue-glow);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.4);
 }
 
 .btn-primary:active { transform: translateY(0); }
@@ -170,31 +251,87 @@ body {
 
 /* ── バッジ ── */
 .badge-positive {
-  background: rgba(16, 185, 129, 0.15);
+  background: rgba(52, 211, 153, 0.12);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid rgba(52, 211, 153, 0.3);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 3px 12px;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .badge-negative {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(244, 63, 94, 0.12);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(244, 63, 94, 0.3);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 3px 12px;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.05em;
 }
 
 .badge-neutral {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.12);
   color: #fbbf24;
   border: 1px solid rgba(245, 158, 11, 0.3);
   border-radius: 999px;
-  padding: 2px 10px;
+  padding: 3px 12px;
   font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* ── サイバーグリッド背景 ── */
+.cyber-grid {
+  background-image:
+    linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── ネオンハイライト ── */
+.neon-text-green {
+  color: #34d399;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.6);
+}
+
+.neon-text-blue {
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.neon-badge {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  color: #34d399;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.1);
+}
+
+.neon-badge-red {
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+}
+
+.neon-badge-blue {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  border-radius: 4px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
 }
