@@ -1,103 +1,104 @@
 """Reddit 投稿収集モジュール。
 
-APIキー不要の .json エンドポイントを使用して、指定した銘柄に関する投稿を収集します。
+PRAW (Python Reddit API Wrapper) を使用して、指定した銘柄に関する投稿を収集します。
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
-from datetime import datetime, timezone
-import requests
+from datetime import datetime, timezone, timedelta
 
+import praw
+
+from app.config import get_settings
 from app.models.schemas import RedditPost
 
 logger = logging.getLogger(__name__)
 
-MOCK_FILE_PATH = "data/mock_wsb_data.json"
 
-async def fetch_reddit_posts(
+async def fetch_reddit_posts_window(
     query: str,
+    start_time: datetime,
     max_items: int = 10,
-    subreddits: list[str] | None = None,
+    initial_window_hours: int = 24,
+    max_window_hours: int = 168,  # 最大1週間
 ) -> list[RedditPost]:
-    """Reddit からキーワードに関連する投稿を取得します（APIキー不要の JSON エンドポイント使用）。
+    """特定の開始日時から時間枠を広げながら投稿を収集します。
 
     Args:
-        query: 検索キーワード（会社名やティッカー）。
+        query: 検索クエリ。
+        start_time: 検索の基準となる開始日時（TDnet開示時刻）。
         max_items: 最大取得件数。
-        subreddits: 検索対象のサブレディット。None の場合は全て。
-
-    Returns:
-        RedditPost のリスト。
+        initial_window_hours: 初期の時間枠（時間）。
+        max_window_hours: 最大の時間枠（時間）。
     """
-    logger.info("Reddit から投稿を取得中: query=%s", query)
+    settings = get_settings()
+    if not settings.reddit_client_id or not settings.reddit_client_secret:
+        return []
 
-    # 検索対象を特定のサブレディットに絞る（デフォルトで r/wallstreetbets）
-    # restrict_sr=1 でサブレディット内検索に限定
-    subreddit_path = f"r/{subreddits[0]}/" if subreddits else "r/wallstreetbets/"
-    url = f"https://www.reddit.com/{subreddit_path}search.json?q={query}&restrict_sr=1&sort=new&limit={max_items}"
-    
-    # Redditに弾かれないよう、適当なUser-Agentを設定（必須）
-    headers = {
-        'User-Agent': 'macos:hellowallstreet.hackathon:v1.0 (by /u/che_vi)'
-    }
+    window = initial_window_hours
+    results: list[RedditPost] = []
 
-    try:
-        response = await asyncio.to_thread(requests.get, url, headers=headers, timeout=10)
-        response.raise_for_status() # エラーなら例外を投げる
+    while window <= max_window_hours:
+        logger.info("Reddit 検索中 (Window: %dh): query=%s", window, query)
         
-        data = response.json()
-        posts_data: list[RedditPost] = []
-        
-        # JSONの構造をパースして必要な情報だけ抽出
-        for child in data.get('data', {}).get('children', []):
-            post = child.get('data', {})
-            post_url = post.get('url', '')
-            
-            # TODO: Add logic to extract image URL for schemas that support it, 
-            # or pass url intact if RedditPost schema can use it.
-            
-            created_at_val = post.get('created_utc', 0)
-            
-            posts_data.append(
-                RedditPost(
-                    post_id=post.get('id', ''),
-                    title=post.get('title', ''),
-                    body=post.get('selftext', '')[:1000],  # 本文（先頭 1000 文字）
-                    score=post.get('score', 0),
-                    num_comments=post.get('num_comments', 0),
-                    subreddit=post.get('subreddit', 'wallstreetbets'),
-                    url=f"https://www.reddit.com{post.get('permalink', '')}" if not post_url.startswith('https') else post_url,
-                    created_at=datetime.fromtimestamp(created_at_val, tz=timezone.utc),
-                )
-            )
-            
-        logger.info("Reddit: %d 件の投稿を取得しました", len(posts_data))
-        return posts_data
-
-    except Exception as exc:
-        logger.error("Reddit JSON Fetch Error: %s. Falling back to mock data.", exc)
+        # PRAW で検索実行（sort="new" で最新から取得し、時間でフィルタリング）
         try:
-            with open(MOCK_FILE_PATH, "r") as f:
-                mock_data = json.load(f)
-                return [
-                    RedditPost(
-                        post_id="mock",
-                        title=d.get("Title", ""),
-                        body=d.get("Body", ""),
-                        score=d.get("Score", 0),
-                        num_comments=0,
-                        subreddit="wallstreetbets",
-                        url=d.get("URL", ""),
-                        created_at=datetime.utcnow()
+            reddit = praw.Reddit(
+                client_id=settings.reddit_client_id,
+                client_secret=settings.reddit_client_secret,
+                user_agent=settings.reddit_user_agent,
+            )
+
+            loop = asyncio.get_event_loop()
+            # 検索時は余裕を持って多めに取得し、コード側で時間フィルタリング
+            posts = await loop.run_in_executor(
+                None,
+                lambda: list(reddit.subreddit("all").search(
+                    query, 
+                    limit=max_items * 5,
+                    sort="new",
+                    time_filter="month" # 十分な範囲を指定
+                ))
+            )
+
+            # 時間フィルタリング: [start_time, start_time + window]
+            end_time = start_time.replace(tzinfo=timezone.utc) if start_time.tzinfo is None else start_time
+            end_limit = end_time.timestamp() + (window * 3600)
+            start_limit = end_time.timestamp()
+
+            for post in posts:
+                created_utc = post.created_utc
+                # 開示後からウィンドウ終了までの投稿を抽出
+                if start_limit <= created_utc <= end_limit:
+                    if len(results) >= max_items:
+                        break
+                    results.append(
+                        RedditPost(
+                            post_id=post.id,
+                            title=post.title,
+                            body=getattr(post, "selftext", "")[:1000],
+                            score=post.score,
+                            num_comments=post.num_comments,
+                            subreddit=post.subreddit.display_name,
+                            url=f"https://www.reddit.com{post.permalink}",
+                            created_at=datetime.fromtimestamp(created_utc, tz=timezone.utc),
+                        )
                     )
-                    for d in mock_data
-                ][:max_items]
-        except Exception as mock_exc:
-            logger.error("モックデータの読み込みにも失敗しました: %s", mock_exc)
-            return []
+            
+            if results:
+                logger.info("Reddit: Window %dh で %d 件ヒット", window, len(results))
+                break
+            
+            # ヒットしなければウィンドウを拡大
+            window += 24
+            
+        except Exception as exc:
+            logger.error("Reddit 検索ループエラー: %s", exc)
+            break
+
+    return results
 
 
 # ──────────────────────────────────────────
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     async def _debug() -> None:
-        posts = await fetch_reddit_posts("NVDA", max_items=5)
+        posts = await fetch_reddit_posts_window("Toyota", start_time=datetime.now() - timedelta(days=7), max_items=5)
         for p in posts:
             print(f"[{p.subreddit}] {p.title} (Score: {p.score})")
             print(f" URL: {p.url}")

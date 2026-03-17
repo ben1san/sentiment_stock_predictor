@@ -19,7 +19,7 @@ from app.models.schemas import SentimentArticle, SentimentResult
 logger = logging.getLogger(__name__)
 
 # Gemini モデル名
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "models/gemini-1.5-flash"
 
 # ──────────────────────────────────────────
 # プロンプトテンプレート
@@ -190,13 +190,16 @@ def _mock_sentiment(article: SentimentArticle) -> SentimentResult:
 
     if pos_count > neg_count:
         score, label = 0.45, "positive"
-        explanation = "ポジティブキーワードが多く含まれているため、強気の見通しと判断（モックデータ）。"
+        explanation = "Positiveキーワードが含まれているため、Positiveと判断（モックモード）。"
     elif neg_count > pos_count:
         score, label = -0.40, "negative"
-        explanation = "ネガティブキーワードが多く含まれているため、弱気の見通しと判断（モックデータ）。"
+        explanation = "Negativeキーワードが含まれているため、Negativeと判断（モックモード）。"
     else:
-        score, label = 0.05, "neutral"
-        explanation = "特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。"
+        # 完全に固定値だと不自然なので、微小な変動を持たせる
+        import random
+        score = round(random.uniform(-0.02, 0.02), 3)
+        label = "neutral"
+        explanation = "特筆すべき方向性が見られず、Neutral（中立）な内容と判断（モックモード）。"
 
     return SentimentResult(
         title=article.title,
