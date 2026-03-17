@@ -11,7 +11,7 @@ interface StockPriceCardProps {
 const DIRECTION_CONFIG = {
   up: {
     icon: "▲",
-    label: "Bullish",
+    label: "Positive",
     color: "#34d399",
     borderColor: "rgba(52,211,153,0.3)",
     bgColor: "rgba(52,211,153,0.06)",
@@ -19,7 +19,7 @@ const DIRECTION_CONFIG = {
   },
   down: {
     icon: "▼",
-    label: "Bearish",
+    label: "Negative",
     color: "#f43f5e",
     borderColor: "rgba(244,63,94,0.3)",
     bgColor: "rgba(244,63,94,0.06)",

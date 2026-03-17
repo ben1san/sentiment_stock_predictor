@@ -10,11 +10,11 @@ interface SentimentGaugeProps {
 }
 
 function getColor(score: number): { stroke: string; glow: string; label: string } {
-  if (score >= 0.5) return { stroke: "#34d399", glow: "rgba(52,211,153,0.6)", label: "Bullish" };
-  if (score >= 0.2) return { stroke: "#6ee7b7", glow: "rgba(110,231,183,0.5)", label: "Slightly Bullish" };
+  if (score >= 0.5) return { stroke: "#34d399", glow: "rgba(52,211,153,0.6)", label: "Positive" };
+  if (score >= 0.2) return { stroke: "#6ee7b7", glow: "rgba(110,231,183,0.5)", label: "Slightly Positive" };
   if (score >= -0.2) return { stroke: "#fbbf24", glow: "rgba(251,191,36,0.5)", label: "Neutral" };
-  if (score >= -0.5) return { stroke: "#fb923c", glow: "rgba(251,146,60,0.4)", label: "Slightly Bearish" };
-  return { stroke: "#f43f5e", glow: "rgba(244,63,94,0.6)", label: "Bearish" };
+  if (score >= -0.5) return { stroke: "#fb923c", glow: "rgba(251,146,60,0.4)", label: "Slightly Negative" };
+  return { stroke: "#f43f5e", glow: "rgba(244,63,94,0.6)", label: "Negative" };
 }
 
 export default function SentimentGauge({

@@ -141,9 +141,9 @@ def _build_sentiment_summary(
     neu_count = n - pos_count - neg_count
 
     label_map = {
-        "positive": "ポジティブ（強気）",
-        "neutral": "中立",
-        "negative": "ネガティブ（弱気）",
+        "positive": "Positive（強気）",
+        "neutral": "Neutral（中立）",
+        "negative": "Negative（弱気）",
     }
 
     summary = (
