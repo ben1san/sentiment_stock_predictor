@@ -9,8 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.models.schemas import HealthResponse
-from app.routers import predict, sentiment, stocks
-
+from app.routers import predict, sentiment, stocks, wsb
 settings = get_settings()
 
 app = FastAPI(
@@ -38,6 +37,7 @@ app.add_middleware(
 app.include_router(predict.router)
 app.include_router(sentiment.router)
 app.include_router(stocks.router)
+app.include_router(wsb.router)
 
 
 # ──────────────────────────────────────────
