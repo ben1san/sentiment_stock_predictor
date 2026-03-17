@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 import praw
 
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     async def _debug() -> None:
-        posts = await fetch_reddit_posts("Toyota", max_items=5)
+        posts = await fetch_reddit_posts_window("Toyota", start_time=datetime.now() - timedelta(days=7), max_items=5)
         for p in posts:
             print(f"[{p.subreddit}] {p.title} (Score: {p.score})")
             print(f" URL: {p.url}")

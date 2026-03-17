@@ -103,7 +103,7 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
             letterSpacing: "-0.02em", lineHeight: 1, marginBottom: "16px",
           }}
         >
-          ¥{data.current_price.toLocaleString("ja-JP")}
+          ¥{data.current_price?.toLocaleString("ja-JP") ?? "---"}
         </p>
 
         {/* 前日比バッジ */}
@@ -119,8 +119,9 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
             textShadow: `0 0 8px ${dir.color}70`,
           }}>
             {dir.icon}{" "}
-            {data.predicted_change_pct >= 0 ? "+" : ""}
-            {data.predicted_change_pct.toFixed(2)}%
+            {data.predicted_change_pct !== undefined && data.predicted_change_pct !== null
+              ? `${data.predicted_change_pct >= 0 ? "+" : ""}${data.predicted_change_pct.toFixed(2)}%`
+              : "---"}
           </span>
           <span style={{ fontSize: "0.8rem", color: dir.color, fontWeight: 700 }}>
             {dir.label}

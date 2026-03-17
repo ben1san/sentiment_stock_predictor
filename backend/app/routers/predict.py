@@ -6,7 +6,6 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Query
 
-from app.collectors.reddit_scraper import fetch_reddit_posts
 from app.collectors.tdnet_scraper import fetch_latest_disclosures
 from app.ml.predict import predict_stock_direction
 from app.models.schemas import (
