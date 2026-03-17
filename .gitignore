@@ -1,0 +1,54 @@
+# Sentiment Stock Predictor - .gitignore
+
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.pyc
+
+# ── 環境変数（重要：APIキーを含むため絶対にコミットしない） ──
+.env
+.env.local
+.env.*.local
+*.env
+
+# ── Node / Next.js ──
+node_modules/
+.next/
+out/
+.npm
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Vercel ──
+.vercel
+
+# ── データファイル ──
+backend/data/*.csv
+backend/data/*.pkl
+backend/data/*.joblib
+
+# ── Jupyter ──
+.ipynb_checkpoints/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ──
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
