@@ -4,7 +4,7 @@ import React, { useState, useCallback } from "react";
 import { fetchPrediction } from "@/lib/api";
 import type { PredictionResponse } from "@/types/api";
 import StockPriceCard from "@/components/StockPriceCard";
-import SentimentReasoning from "@/components/SentimentReasoning";
+import AIAnalysisSummary from "@/components/AIAnalysisSummary";
 
 /* ── トヨタ(7203)ダミーデータ ── */
 const DUMMY_DATA: PredictionResponse = {
@@ -17,54 +17,38 @@ const DUMMY_DATA: PredictionResponse = {
   sentiment_score: 0.62,
   sentiment_label: "positive",
   sentiment_summary:
-    "トヨタ自動車（7203）は、第3四半期において過去最高の増益を記録。電動化戦略の加速とコスト削減施策が奏功し、北米市場でのブレイクアウトが確認されています。パブリックセンチメントも強気優勢。",
+    "トヨタ自動車（7203）は、第3四半期において過去最高の営業利益を記録。北米市場でのハイブリッド車需要の拡大と、徹底したコスト削減施策が奏功し、強固な収益基盤を構築しています。中国市場での競争激化などの懸念材料はあるものの、全体として非常に強力な成長モメンタムを維持しています。",
   news_articles: [
     {
-      title: "トヨタ、第3四半期営業利益が過去最高更新 — 電動化戦略が奏功",
+      title: "業績：第3四半期営業利益が過去最高更新",
       score: 0.85,
       label: "positive",
       explanation:
-        "電動化への大規模投資と北米市場での販売増が利益を大幅に押し上げた。ハイブリッド車需要の急増により、競合他社との差別化が明確に。",
+        "電動化への大規模投資と北米市場での販売増が利益を大幅に押し上げ、過去最高の更新へと繋がりました。",
       source: "TDnet",
     },
     {
-      title: "トヨタ自動車、2024年度通期業績予想を上方修正",
+      title: "上方修正：2024年度通期業績予想を上方修正",
       score: 0.72,
       label: "positive",
       explanation:
-        "円安と北米販売好調を受け、通期営業利益を4.7兆円に上方修正。ガイダンスの引き上げは市場予想を上回り、強気シグナルとして評価。",
+        "好調な北米販売を受け、通期営業利益を4.7兆円に上方修正。市場予想を大きく上回るポジティブな内容です。",
       source: "TDnet",
     },
     {
-      title: "ハイブリッド車の世界需要が急増、トヨタが恩恵",
-      score: 0.61,
-      label: "positive",
-      explanation:
-        "欧米でのハイブリッド車需要増加がトヨタの販売台数を持続的に押し上げている。政策的追い風も加わりポジティブ評価。",
-      source: "Public",
-    },
-    {
-      title: "中国市場での競争激化、現地EVメーカーとの価格競争が懸念",
+      title: "市場競争：中国現地メーカーとの価格競争が懸念",
       score: -0.38,
       label: "negative",
       explanation:
-        "BYDをはじめとする中国EVメーカーの台頭により、中国でのシェアが低下傾向にある。価格競争の激化がマージン圧迫要因として働く可能性。",
+        "中国EVメーカーの台頭により現地シェアが低下傾向にあり、中長期的なマージン圧迫が警戒されています。",
       source: "Public",
     },
     {
-      title: "半導体供給の一部回復でトヨタの生産制約が緩和",
-      score: 0.45,
-      label: "positive",
-      explanation:
-        "車載半導体供給の改善により生産台数増加が見込まれ、需要への対応力が向上。在庫正常化への進展が追い風。",
-      source: "TDnet",
-    },
-    {
-      title: "為替変動リスク：円高進行でのコスト増加シナリオ",
+      title: "外部要因：為替の円高転換リスク",
       score: -0.22,
       label: "negative",
       explanation:
-        "現在の円安が業績を下支えしているが、急激な円高転換が生じた場合、輸出企業として売上・利益への影響が懸念される。",
+        "現在の為替水準は追い風ですが、急激な円高転換が生じた場合の輸出採算性の低下がリスク要因となります。",
       source: "Public",
     },
   ],
@@ -100,21 +84,10 @@ function HeaderSearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1, maxWidth: "560px" }}
+      style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, maxWidth: "600px" }}
     >
       <div style={{ position: "relative", flex: 1 }}>
-        {/* スキャンライン */}
-        {isLoading && (
-          <div
-            style={{
-              position: "absolute",
-              top: 0, left: 0, right: 0, height: "2px",
-              background: "linear-gradient(90deg, transparent, #38bdf8, #34d399, transparent)",
-              animation: "scan 1.8s linear infinite",
-              borderRadius: "999px",
-            }}
-          />
-        )}
+        {/* 指紋/光沢アニメーション */}
         <input
           id="ticker-input"
           type="text"
@@ -125,40 +98,40 @@ function HeaderSearchBar({
           onBlur={() => setFocused(false)}
           style={{
             width: "100%",
-            background: focused ? "rgba(56,189,248,0.06)" : "rgba(255,255,255,0.04)",
-            border: `1px solid ${focused ? "rgba(56,189,248,0.45)" : "rgba(255,255,255,0.08)"}`,
-            borderRadius: "9px",
-            padding: "9px 16px",
+            background: focused ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
+            border: `1px solid ${focused ? "rgba(56,189,248,0.25)" : "rgba(255,255,255,0.04)"}`,
+            borderRadius: "12px",
+            padding: "10px 20px",
             color: "var(--text-primary)",
-            fontSize: "0.9rem",
+            fontSize: "0.95rem",
             fontWeight: 600,
             outline: "none",
-            transition: "all 0.2s",
+            transition: "all 0.3s cubic-bezier(0.19, 1, 0.22, 1)",
             letterSpacing: "0.04em",
-            boxShadow: focused ? "0 0 0 3px rgba(56,189,248,0.1)" : "none",
           }}
         />
+        {isLoading && (
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0, left: "20px", right: "20px", height: "1px",
+              background: "linear-gradient(90deg, #38bdf8, #34d399, #38bdf8)",
+              animation: "scan 1.5s infinite linear"
+            }}
+          />
+        )}
       </div>
       <button
         id="predict-btn"
         type="submit"
         disabled={isLoading}
         className="btn-primary"
-        style={{ padding: "9px 20px", fontSize: "0.85rem", whiteSpace: "nowrap" }}
+        style={{ 
+          padding: "10px 24px", fontSize: "0.85rem", whiteSpace: "nowrap",
+          borderRadius: "12px", boxShadow: "0 0 16px rgba(56,189,248,0.15)" 
+        }}
       >
-        {isLoading ? (
-          <span
-            style={{
-              width: "14px", height: "14px",
-              border: "2px solid rgba(255,255,255,0.2)",
-              borderTopColor: "white",
-              borderRadius: "50%", display: "inline-block",
-            }}
-            className="animate-spin-slow"
-          />
-        ) : (
-          "🚀 分析"
-        )}
+        {isLoading ? "ANALYZING..." : "ANALYZE"}
       </button>
     </form>
   );
@@ -184,217 +157,108 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#05080A", position: "relative" }}>
-      {/* サイバーグリッド背景 */}
-      <div
-        className="cyber-grid"
-        style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.35 }}
+    <div style={{ minHeight: "100vh", background: "#06090c", position: "relative", color: "#f8fafc" }}>
+      {/* 高級感のある背景装飾 */}
+      <div 
+        style={{ position: "fixed", inset: 0, 
+        backgroundImage: "radial-gradient(circle at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.04) 0%, transparent 35%)",
+        pointerEvents: "none", zIndex: 0 }} 
       />
-      {/* アンビエントグロー */}
-      <div style={{
-        position: "fixed", top: "15%", left: "5%",
-        width: "500px", height: "400px",
-        background: "radial-gradient(circle, rgba(56,189,248,0.04) 0%, transparent 70%)",
-        pointerEvents: "none", zIndex: 0,
-      }} />
-      <div style={{
-        position: "fixed", bottom: "10%", right: "8%",
-        width: "400px", height: "300px",
-        background: "radial-gradient(circle, rgba(52,211,153,0.04) 0%, transparent 70%)",
-        pointerEvents: "none", zIndex: 0,
-      }} />
+      <div className="cyber-grid" style={{ position: "fixed", inset: 0, opacity: 0.15, pointerEvents: "none" }} />
 
-      {/* ══════════ ヘッダー（検索バー内蔵） ══════════ */}
-      <header
-        style={{
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
-          backdropFilter: "blur(24px)",
-          background: "rgba(5,8,10,0.92)",
-          position: "sticky", top: 0, zIndex: 100,
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1400px", margin: "0 auto",
-            padding: "0 28px", height: "58px",
-            display: "flex", alignItems: "center", gap: "20px",
-          }}
-        >
-          {/* ロゴ */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+      {/* ───── ヘッダー ───── */}
+      <header style={{
+        borderBottom: "1px solid rgba(255,255,255,0.03)",
+        backdropFilter: "blur(40px)",
+        background: "rgba(6,9,12,0.85)",
+        position: "sticky", top: 0, zIndex: 100,
+      }}>
+        <div style={{ maxWidth: "1360px", margin: "0 auto", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", gap: "40px" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
             <div style={{
-              width: "32px", height: "32px", borderRadius: "8px",
-              background: "linear-gradient(135deg, #0f3460, #38bdf8)",
+              width: "36px", height: "36px", borderRadius: "10px",
+              background: "linear-gradient(135deg, #0e1116, #1a232e)",
+              border: "1px solid rgba(56,189,248,0.25)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "15px", boxShadow: "0 0 16px rgba(56,189,248,0.3)",
+              fontSize: "18px", boxShadow: "0 0 20px rgba(56,189,248,0.1)",
             }}>
               📊
             </div>
             <div>
-              <p style={{
-                fontSize: "0.88rem", fontWeight: 800,
-                color: "var(--text-primary)", letterSpacing: "0.01em", lineHeight: 1.2,
-              }}>
-                Sentiment Stock Predictor
+              <p style={{ fontSize: "0.9rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "0.02em", lineHeight: 1.2 }}>
+                Sentiment Predictor
               </p>
-              <p style={{ fontSize: "0.58rem", color: "var(--text-muted)", letterSpacing: "0.08em" }}>
-                AI-POWERED MARKET ANALYSIS
+              <p style={{ fontSize: "0.55rem", color: "var(--text-muted)", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+                Minimal Futuristic
               </p>
             </div>
           </div>
 
-          {/* 中央：検索バー */}
           <HeaderSearchBar onSearch={handleSearch} isLoading={isLoading} />
 
-          {/* 右：クイック選択 */}
-          <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
-            {POPULAR_TICKERS.map((t) => (
-              <button
-                key={t.value}
-                id={`quick-${t.value.replace(/\./g, "_")}`}
-                type="button"
-                onClick={() => handleSearch(t.value)}
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  color: "var(--text-secondary)",
-                  fontSize: "0.7rem", fontWeight: 600,
-                  cursor: "pointer", transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(56,189,248,0.12)";
-                  (e.currentTarget as HTMLButtonElement).style.color = "#38bdf8";
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(56,189,248,0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
-                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
-                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.07)";
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {/* ステータス */}
-          <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
+          <div style={{ marginLeft: "auto", display: "flex", gap: "10px", alignItems: "center" }}>
             <span style={{
-              background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.22)",
-              color: "#34d399", borderRadius: "6px", padding: "3px 10px",
-              fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.05em",
-              display: "flex", alignItems: "center", gap: "4px",
+              background: "rgba(52,211,153,0.04)", border: "1px solid rgba(52,211,153,0.15)",
+              color: "#34d399", borderRadius: "8px", padding: "4px 14px", fontSize: "0.65rem", fontWeight: 900,
+              letterSpacing: "0.1em"
             }}>
-              <span style={{
-                width: "5px", height: "5px", background: "#34d399",
-                borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #34d399",
-              }} className="animate-pulse-glow" />
-              GEMINI AI
+              CONNECTED: GEMINI-1.5-PRO
             </span>
           </div>
         </div>
       </header>
 
-      {/* ══════════ メインコンテンツ ══════════ */}
-      <main
-        style={{
-          maxWidth: "1400px", margin: "0 auto",
-          padding: "24px 28px 60px",
-          position: "relative", zIndex: 1,
-        }}
-      >
-        {/* ローディング */}
+      {/* ───── メイン ───── */}
+      <main style={{ maxWidth: "1360px", margin: "0 auto", padding: "40px", position: "relative", zIndex: 1 }}>
         {isLoading && <LoadingState />}
-
-        {/* エラー */}
         {error && !isLoading && <ErrorState message={error} />}
-
-        {/* 初期 */}
         {!prediction && !isLoading && !error && <EmptyState />}
 
-        {/* ── データ表示 ── */}
         {prediction && !isLoading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-
-            {/* ① 株価カード + センチメントゲージ 3カラム */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
             <StockPriceCard data={prediction} />
-
-            {/* ② センチメントスコアの根拠（適時開示・群衆の理由を緑/赤で） */}
-            <SentimentReasoning
-              articles={prediction.news_articles}
-              ticker={prediction.ticker}
+            <AIAnalysisSummary 
+              articles={prediction.news_articles} 
+              summary={prediction.sentiment_summary} 
             />
-
           </div>
         )}
       </main>
 
-      {/* フッター */}
-      <footer style={{
-        borderTop: "1px solid rgba(255,255,255,0.04)",
-        padding: "16px 28px", textAlign: "center",
-        color: "var(--text-muted)", fontSize: "0.7rem",
-        position: "relative", zIndex: 1,
-      }}>
-        <p>
-          Sentiment Stock Predictor &copy; 2026 —{" "}
-          <span className="neon-text-blue">Gemini AI</span> ・ TDnet 適時開示
-        </p>
-        <p style={{ marginTop: "3px", opacity: 0.55 }}>
-          本ツールは投資助言ではありません。投資判断は自己責任でお願いします。
-        </p>
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.02)", padding: "24px 40px", textAlign: "center", color: "var(--text-muted)", fontSize: "0.65rem" }}>
+        <p style={{ letterSpacing: "0.05em" }}>SENTIMENT STOCK PREDICTOR &copy; 2026 ・ POWERED BY GEMINI AI</p>
       </footer>
     </div>
   );
 }
 
-/* ── ローディング ── */
 function LoadingState() {
   return (
-    <div className="glass-card" style={{ padding: "56px 32px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: "2px",
-        background: "linear-gradient(90deg, transparent, #38bdf8, #34d399, transparent)",
-        animation: "scan 2s linear infinite",
-      }} />
-      <div style={{
-        width: "52px", height: "52px",
-        border: "2px solid rgba(56,189,248,0.15)",
-        borderTopColor: "#38bdf8", borderRightColor: "#34d399",
-        borderRadius: "50%", margin: "0 auto 18px",
-      }} className="animate-spin-slow" />
-      <p style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: "1rem", marginBottom: "6px" }}>
-        解析中...
-      </p>
-      <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem" }}>
-        TDnet 適時開示を収集し、Gemini AI がセンチメント分析を実行しています
-      </p>
+    <div className="glass-card" style={{ padding: "80px 40px", textAlign: "center" }}>
+      <div style={{ width: "48px", height: "48px", border: "2px solid rgba(56,189,248,0.1)", borderTopColor: "#38bdf8", borderRadius: "50%", margin: "0 auto 24px" }} className="animate-spin-slow" />
+      <p style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "8px" }}>銘柄をAIが詳細解析中</p>
+      <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>一次情報（適時開示）と二次情報（SNS）のセンチメントを計算しています...</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="glass-card glow-red" style={{ padding: "32px", textAlign: "center", borderColor: "rgba(244,63,94,0.3)" }}>
-      <p style={{ fontSize: "2rem", marginBottom: "10px" }}>⚠️</p>
-      <p style={{ color: "#f43f5e", fontWeight: 700, marginBottom: "8px" }}>エラーが発生しました</p>
-      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>{message}</p>
+    <div className="glass-card" style={{ padding: "40px", textAlign: "center", borderColor: "rgba(244,63,94,0.2)" }}>
+      <p style={{ fontSize: "2rem", marginBottom: "16px" }}>⚠️</p>
+      <p style={{ color: "#f43f5e", fontWeight: 700, marginBottom: "8px" }}>解析に失敗しました</p>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>{message}</p>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="glass-card" style={{ padding: "80px 32px", textAlign: "center" }}>
-      <p style={{ fontSize: "3rem", marginBottom: "16px" }}>📈</p>
-      <p style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "8px" }}>
-        銘柄を入力して分析を開始
-      </p>
-      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
-        上部の検索バーにティッカーシンボルを入力してください
-      </p>
+    <div className="glass-card" style={{ padding: "100px 40px", textAlign: "center" }}>
+      <p style={{ fontSize: "3rem", marginBottom: "20px" }}>📈</p>
+      <p style={{ fontWeight: 800, fontSize: "1.3rem", marginBottom: "12px", color: "var(--text-primary)" }}>銘柄レポートを生成します</p>
+      <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", maxWidth: "400px", margin: "0 auto" }}>最先端のAIが最新の適時開示情報と世論を統合し、即時にセンチメントを可視化します。</p>
     </div>
   );
 }

@@ -17,73 +17,88 @@ from app.models.schemas import RedditPost
 logger = logging.getLogger(__name__)
 
 
-async def fetch_reddit_posts(
+async def fetch_reddit_posts_window(
     query: str,
+    start_time: datetime,
     max_items: int = 10,
-    subreddits: list[str] | None = None,
+    initial_window_hours: int = 24,
+    max_window_hours: int = 168,  # 最大1週間
 ) -> list[RedditPost]:
-    """Reddit からキーワードに関連する投稿を取得します。
+    """特定の開始日時から時間枠を広げながら投稿を収集します。
 
     Args:
-        query: 検索キーワード（会社名やティッカー）。
+        query: 検索クエリ。
+        start_time: 検索の基準となる開始日時（TDnet開示時刻）。
         max_items: 最大取得件数。
-        subreddits: 検索対象のサブレディット。None の場合は全て。
-
-    Returns:
-        RedditPost のリスト。
+        initial_window_hours: 初期の時間枠（時間）。
+        max_window_hours: 最大の時間枠（時間）。
     """
     settings = get_settings()
-
     if not settings.reddit_client_id or not settings.reddit_client_secret:
-        logger.warning("Reddit API の認証情報が設定されていません。投稿の収集をスキップします。")
         return []
 
-    logger.info("Reddit から投稿を取得中: query=%s", query)
+    window = initial_window_hours
+    results: list[RedditPost] = []
 
-    # PRAW は同期ライブラリなので、別スレッドで実行することを検討するか、
-    # 本格的な運用の場合は aio-praw への切り替えを推奨。
-    # ここではシンプルにするため、同期メソッドをラップして実行（将来的に aio-praw も検討）。
-    
-    try:
-        # PRAW クライアント初期化
-        reddit = praw.Reddit(
-            client_id=settings.reddit_client_id,
-            client_secret=settings.reddit_client_secret,
-            user_agent=settings.reddit_user_agent,
-        )
-
-        loop = asyncio.get_event_loop()
-        posts = await loop.run_in_executor(
-            None,
-            lambda: list(reddit.subreddit("all").search(
-                query, 
-                limit=max_items,
-                sort="relevance",
-                time_filter="week"
-            ))
-        )
-
-        results: list[RedditPost] = []
-        for post in posts:
-            results.append(
-                RedditPost(
-                    post_id=post.id,
-                    title=post.title,
-                    body=getattr(post, "selftext", "")[:1000],  # 本文（先頭 1000 文字）
-                    score=post.score,
-                    num_comments=post.num_comments,
-                    subreddit=post.subreddit.display_name,
-                    url=f"https://www.reddit.com{post.permalink}",
-                    created_at=datetime.fromtimestamp(post.created_utc, tz=timezone.utc),
-                )
+    while window <= max_window_hours:
+        logger.info("Reddit 検索中 (Window: %dh): query=%s", window, query)
+        
+        # PRAW で検索実行（sort="new" で最新から取得し、時間でフィルタリング）
+        try:
+            reddit = praw.Reddit(
+                client_id=settings.reddit_client_id,
+                client_secret=settings.reddit_client_secret,
+                user_agent=settings.reddit_user_agent,
             )
 
-        logger.info("Reddit: %d 件の投稿を取得しました", len(results))
-        return results
+            loop = asyncio.get_event_loop()
+            # 検索時は余裕を持って多めに取得し、コード側で時間フィルタリング
+            posts = await loop.run_in_executor(
+                None,
+                lambda: list(reddit.subreddit("all").search(
+                    query, 
+                    limit=max_items * 5,
+                    sort="new",
+                    time_filter="month" # 十分な範囲を指定
+                ))
+            )
 
-    except Exception as exc:
-        logger.error("Reddit API エラー: %s", exc)
-        return []
+            # 時間フィルタリング: [start_time, start_time + window]
+            end_time = start_time.replace(tzinfo=timezone.utc) if start_time.tzinfo is None else start_time
+            end_limit = end_time.timestamp() + (window * 3600)
+            start_limit = end_time.timestamp()
+
+            for post in posts:
+                created_utc = post.created_utc
+                # 開示後からウィンドウ終了までの投稿を抽出
+                if start_limit <= created_utc <= end_limit:
+                    if len(results) >= max_items:
+                        break
+                    results.append(
+                        RedditPost(
+                            post_id=post.id,
+                            title=post.title,
+                            body=getattr(post, "selftext", "")[:1000],
+                            score=post.score,
+                            num_comments=post.num_comments,
+                            subreddit=post.subreddit.display_name,
+                            url=f"https://www.reddit.com{post.permalink}",
+                            created_at=datetime.fromtimestamp(created_utc, tz=timezone.utc),
+                        )
+                    )
+            
+            if results:
+                logger.info("Reddit: Window %dh で %d 件ヒット", window, len(results))
+                break
+            
+            # ヒットしなければウィンドウを拡大
+            window += 24
+            
+        except Exception as exc:
+            logger.error("Reddit 検索ループエラー: %s", exc)
+            break
+
+    return results
 
 
 # ──────────────────────────────────────────

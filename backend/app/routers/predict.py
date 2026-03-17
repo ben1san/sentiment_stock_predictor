@@ -31,28 +31,67 @@ async def run_prediction(req: PredictionRequest) -> PredictionResponse:
     3. Gemini API でセンチメント分析
     4. 予測ロジックで方向性を算出
     """
-    ticker = req.ticker.upper()
-    logger.info("予測リクエスト受信: ticker=%s", ticker)
+    # 1. ティッカーの正規化（数値 4 桁なら自動的に .T を付与、銘柄名が含まれていれば除去）
+    raw_ticker = req.ticker.upper()
+    # 数値のみを抽出（例: "9984 ソフトバンクG" -> "9984"）
+    import re
+    numeric_match = re.search(r"\d{4}", raw_ticker)
+    ticker = raw_ticker
+    if numeric_match:
+        base_code = numeric_match.group()
+        if ".T" not in raw_ticker:
+            ticker = f"{base_code}.T"
+        else:
+            ticker = f"{base_code}.T"
+    
+    logger.info("予測リクエスト受信: ticker=%s (変換後: %s)", req.ticker, ticker)
 
     # 1. 株価データ取得
     stock_data = await fetch_stock_data(ticker, period_days=req.period_days)
     if not stock_data.prices:
+        # 米国株などの可能性もあるので、元の入力でもう一度試行（既に試しているが念のため）
+        if ticker != raw_ticker:
+            stock_data = await fetch_stock_data(raw_ticker, period_days=req.period_days)
+            if stock_data.prices:
+                ticker = raw_ticker
+
+    if not stock_data.prices:
         raise HTTPException(
             status_code=404,
-            detail=f"銘柄 '{ticker}' のデータが見つかりません。"
+            detail=f"銘柄 '{req.ticker}' のデータが見つかりません。"
                    "ティッカーを確認してください（例: 7203.T, AAPL）。",
         )
 
     # 2. 記事・投稿を収集
-    # TDnet: 証券コードで検索（末尾の ".T" を除去）
-    base_code = ticker.replace(".T", "").replace(".JP", "")
+    base_code = ticker.split(".")[0]
     company_name = stock_data.company_name or base_code
 
-    tdnet_articles = await fetch_latest_disclosures(ticker=base_code, max_items=10)
-    reddit_posts = await fetch_reddit_posts(
-        query=company_name,
-        max_items=10,
-    )
+    tdnet_articles = await fetch_latest_disclosures(ticker=base_code, max_items=1)
+    
+    reddit_posts = []
+    from app.collectors.reddit_scraper import fetch_reddit_posts_window
+    from datetime import datetime, timezone, timedelta
+
+    if tdnet_articles:
+        # 最新の適時開示時刻を基準にする
+        base_disclosure = tdnet_articles[0]
+        logger.info("最新の開示時刻をトリガーに Reddit を検索: %s", base_disclosure.published_at)
+        
+        reddit_posts = await fetch_reddit_posts_window(
+            query=company_name,
+            start_time=base_disclosure.published_at,
+            max_items=10
+        )
+    else:
+        # TDnet がない場合、直近 24-48 時間の Reddit を取得（現在時刻を基準に 24h 前を開始点とする）
+        logger.info("TDnet 開示が見つからないため、現在時刻を基準に Reddit を検索します。")
+        fallback_start = datetime.now(timezone.utc) - timedelta(hours=24)
+        reddit_posts = await fetch_reddit_posts_window(
+            query=company_name,
+            start_time=fallback_start,
+            max_items=10,
+            initial_window_hours=24
+        )
 
     # 3. センチメント分析用に SentimentArticle に変換
     articles: list[SentimentArticle] = []

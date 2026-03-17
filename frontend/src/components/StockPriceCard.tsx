@@ -128,42 +128,60 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
         </div>
       </div>
 
-      {/* ───── TDnet センチメントゲージ ───── */}
+      {/* ───── TDnet センチメントゲージ (一次情報) ───── */}
       <div
         className="glass-card animate-fade-in-up"
         style={{
           padding: "24px 16px",
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
-          gap: "4px", animationDelay: "0.1s",
+          gap: "8px", animationDelay: "0.1s",
+          border: "1px solid rgba(255,255,255,0.03)",
         }}
       >
-        <p style={{
-          fontSize: "0.63rem", color: "var(--text-muted)",
-          letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px",
-        }}>
-          適時開示センチメント
-        </p>
-        <SentimentGauge score={data.sentiment_score} label="TDnet Financials" size={150} />
+        <div style={{ textAlign: "center" }}>
+          <p style={{
+            fontSize: "0.6rem", color: "var(--text-muted)",
+            letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "2px"
+          }}>
+            Primary Source
+          </p>
+          <p style={{
+            fontSize: "0.8rem", fontWeight: 700, color: "var(--text-primary)",
+            letterSpacing: "0.02em"
+          }}>
+            決算・適時開示
+          </p>
+        </div>
+        <SentimentGauge score={data.sentiment_score} label="一次情報" size={140} />
       </div>
 
-      {/* ───── パブリックセンチメントゲージ ───── */}
+      {/* ───── SNS センチメントゲージ (二次情報) ───── */}
       <div
         className="glass-card animate-fade-in-up"
         style={{
           padding: "24px 16px",
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
-          gap: "4px", animationDelay: "0.2s",
+          gap: "8px", animationDelay: "0.2s",
+          border: "1px solid rgba(255,255,255,0.03)",
         }}
       >
-        <p style={{
-          fontSize: "0.63rem", color: "var(--text-muted)",
-          letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px",
-        }}>
-          群衆センチメント
-        </p>
-        <SentimentGauge score={data.sentiment_score} label="Public Opinion" size={150} />
+        <div style={{ textAlign: "center" }}>
+          <p style={{
+            fontSize: "0.6rem", color: "var(--text-muted)",
+            letterSpacing: "0.15em", textTransform: "uppercase", marginBottom: "2px"
+          }}>
+            Secondary Source
+          </p>
+          <p style={{
+            fontSize: "0.8rem", fontWeight: 700, color: "var(--text-primary)",
+            letterSpacing: "0.02em"
+          }}>
+            SNS・世論
+          </p>
+        </div>
+        <SentimentGauge score={data.sentiment_score} label="二次情報" size={140} />
       </div>
     </div>
   );
