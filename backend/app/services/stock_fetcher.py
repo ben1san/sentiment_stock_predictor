@@ -66,7 +66,13 @@ def _sync_fetch(ticker: str, period_days: int) -> StockDataResponse:
     currency: str = info.get("currency", "JPY")
 
     prices: list[StockPricePoint] = []
+    import pandas as pd
+    
     for idx, row in hist.iterrows():
+        # NaN 値をチェック
+        if pd.isna(row["Close"]) or pd.isna(row["Open"]):
+            continue
+            
         prices.append(
             StockPricePoint(
                 date=idx.date(),
