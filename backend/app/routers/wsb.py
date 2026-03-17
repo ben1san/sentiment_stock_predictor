@@ -1,20 +1,15 @@
-import logging
 import asyncio
 from typing import List, Optional
 from fastapi import APIRouter
 from pydantic import BaseModel
 from transformers import pipeline
 
-try:
-    from services.reddit_client import fetch_reddit_posts
-    from services.llm_analyzer import analyze_wsb_post
-except ImportError:
-    try:
-        from app.services.reddit_client import fetch_reddit_posts
-        from app.services.llm_analyzer import analyze_wsb_post
-    except ImportError:
-        pass
+from app.collectors.reddit_scraper import fetch_reddit_posts
+from app.services.llm_analyzer import analyze_wsb_post
 
+router = APIRouter(prefix="/api/v1/analyze", tags=["wsb"])
+
+# Define Pydantic models for the response
 class AIAnalysis(BaseModel):
     sentiment: str
     apeConvictionScore: int
@@ -36,54 +31,43 @@ class SentimentResponse(BaseModel):
     posts: List[PostData]
 
 
-router = APIRouter(prefix="/api/v1/reddit", tags=["reddit"])
-logger = logging.getLogger(__name__)
-
 # Initialize FinBERT globally so it loads once on startup
-logger.info("Loading FinBERT model...")
-try:
-    finbert = pipeline("sentiment-analysis", model="ProsusAI/finbert")
-    logger.info("FinBERT model loaded successfully.")
-except Exception as e:
-    logger.error(f"Failed to load FinBERT: {e}")
-    finbert = None
+print("Loading FinBERT model for WSB Router...")
+finbert = pipeline("sentiment-analysis", model="ProsusAI/finbert")
+print("FinBERT model loaded successfully.")
 
-@router.get("/analyze/{ticker}", response_model=SentimentResponse)
+@router.get("/{ticker}", response_model=SentimentResponse)
 async def analyze_sentiment(ticker: str, limit: int = 3):
     """
     Fetches Reddit posts, runs text through FinBERT, and combines with Gemini for ensemble analysis.
     """
-    # 1. Fetch raw posts from Reddit
-    raw_posts = fetch_reddit_posts(ticker=ticker, limit=limit)
+    # 1. Fetch raw posts from Reddit (using new reddit_scraper schemas)
+    reddit_posts = await fetch_reddit_posts(query=ticker, max_items=limit)
     
     async def analyze_and_merge(post):
         # 2. FinBERT Analysis
-        text_content = f"{post['Title']} {post['Body']}".strip()
+        text_content = f"{post.title} {post.body}".strip()
         if not text_content:
             text_content = "No text provided."
             
         try:
             # Run FinBERT synchronously in a thread to prevent blocking
-            if finbert:
-                finbert_result = await asyncio.to_thread(
-                    lambda: finbert(text_content, truncation=True, max_length=512)[0]
-                )
-                finbert_label = finbert_result['label']
-                finbert_score = finbert_result['score']
-            else:
-                finbert_label = "neutral"
-                finbert_score = 0.0
+            finbert_result = await asyncio.to_thread(
+                lambda: finbert(text_content, truncation=True, max_length=512)[0]
+            )
+            finbert_label = finbert_result['label']
+            finbert_score = finbert_result['score']
         except Exception as e:
-            logger.error(f"FinBERT Error: {e}")
+            print(f"FinBERT Error: {e}")
             finbert_label = "neutral"
             finbert_score = 0.0
 
         # 3. Gemini Ensemble Analysis
         try:
             ai_data = await analyze_wsb_post(
-                title=post["Title"],
-                body=post["Body"],
-                image_url=post.get("URL"),
+                title=post.title,
+                body=post.body,
+                image_url=post.url,
                 finbert_label=finbert_label,
                 finbert_score=finbert_score
             )
@@ -100,15 +84,18 @@ async def analyze_sentiment(ticker: str, limit: int = 3):
                 aiCommentary=f"Failed wrapper: {e}"
             )
 
-        return {
-            **post, 
-            "finbert_label": finbert_label,
-            "finbert_score": finbert_score,
-            "ai_analysis": ai_analysis
-        }
+        return PostData(
+            Title=post.title,
+            Body=post.body or "",
+            Score=post.score,
+            URL=post.url,
+            finbert_label=finbert_label,
+            finbert_score=finbert_score,
+            ai_analysis=ai_analysis
+        )
 
     # Create tasks for all posts
-    tasks = [analyze_and_merge(post) for post in raw_posts]
+    tasks = [analyze_and_merge(post) for post in reddit_posts]
     
     # 4. Wait for all tasks to complete concurrently
     analyzed_results = await asyncio.gather(*tasks)
