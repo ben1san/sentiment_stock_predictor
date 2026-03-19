@@ -4,7 +4,7 @@ import React, { useState, useCallback } from "react";
 import { fetchPrediction } from "@/lib/api";
 import type { PredictionResponse } from "@/types/api";
 import StockPriceCard from "@/components/StockPriceCard";
-import AIAnalysisSummary from "@/components/AIAnalysisSummary";
+import AIAnalysisEngine from "@/components/AIAnalysisEngine";
 
 /* ── トヨタ(7203)ダミーデータ ── */
 const DUMMY_DATA: PredictionResponse = {
@@ -18,6 +18,17 @@ const DUMMY_DATA: PredictionResponse = {
   sentiment_label: "positive",
   sentiment_summary:
     "トヨタ自動車（7203）は、第3四半期において過去最高の営業利益を記録。北米市場でのハイブリッド車需要の拡大と、徹底したコスト削減施策が奏功し、強固な収益基盤を構築しています。中国市場での競争激化などの懸念材料はあるものの、全体として非常に強力な成長モメンタムを維持しています。",
+  analysis: {
+    fundamental_reason: "過去最高の営業利益と北米市場の好調が継続。供給網の安定化により通期見通しも明るい。",
+    social_insight: "新型ハイブリッド車への期待感と利益水準への驚きがポジティブに反応。",
+    risk_factor: "中国市場での販売シェア減と、原材料コストの変動が主要なリスク。"
+  },
+  scores: {
+    fundamental: 0.82,
+    social: 0.45,
+    gap: 0.37
+  },
+  judgment: "BUY",
   news_articles: [
     {
       title: "業績：第3四半期営業利益が過去最高更新",
@@ -34,22 +45,6 @@ const DUMMY_DATA: PredictionResponse = {
       explanation:
         "好調な北米販売を受け、通期営業利益を4.7兆円に上方修正。市場予想を大きく上回るポジティブな内容です。",
       source: "TDnet",
-    },
-    {
-      title: "市場競争：中国現地メーカーとの価格競争が懸念",
-      score: -0.38,
-      label: "negative",
-      explanation:
-        "中国EVメーカーの台頭により現地シェアが低下傾向にあり、中長期的なマージン圧迫が警戒されています。",
-      source: "Public",
-    },
-    {
-      title: "外部要因：為替の円高転換リスク",
-      score: -0.22,
-      label: "negative",
-      explanation:
-        "現在の為替水準は追い風ですが、急激な円高転換が生じた場合の輸出採算性の低下がリスク要因となります。",
-      source: "Public",
     },
   ],
   price_history: [],
@@ -87,7 +82,6 @@ function HeaderSearchBar({
       style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, maxWidth: "600px" }}
     >
       <div style={{ position: "relative", flex: 1 }}>
-        {/* 指紋/光沢アニメーション */}
         <input
           id="ticker-input"
           type="text"
@@ -102,7 +96,7 @@ function HeaderSearchBar({
             border: `1px solid ${focused ? "rgba(56,189,248,0.25)" : "rgba(255,255,255,0.04)"}`,
             borderRadius: "12px",
             padding: "10px 20px",
-            color: "var(--text-primary)",
+            color: "#f8fafc",
             fontSize: "0.95rem",
             fontWeight: 600,
             outline: "none",
@@ -125,11 +119,7 @@ function HeaderSearchBar({
         id="predict-btn"
         type="submit"
         disabled={isLoading}
-        className="btn-primary"
-        style={{ 
-          padding: "10px 24px", fontSize: "0.85rem", whiteSpace: "nowrap",
-          borderRadius: "12px", boxShadow: "0 0 16px rgba(56,189,248,0.15)" 
-        }}
+        className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 disabled:bg-slate-700 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 text-sm uppercase tracking-wider"
       >
         {isLoading ? "ANALYZING..." : "ANALYZE"}
       </button>
@@ -158,15 +148,12 @@ export default function DashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#06090c", position: "relative", color: "#f8fafc" }}>
-      {/* 高級感のある背景装飾 */}
       <div 
         style={{ position: "fixed", inset: 0, 
         backgroundImage: "radial-gradient(circle at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.04) 0%, transparent 35%)",
         pointerEvents: "none", zIndex: 0 }} 
       />
-      <div className="cyber-grid" style={{ position: "fixed", inset: 0, opacity: 0.15, pointerEvents: "none" }} />
 
-      {/* ───── ヘッダー ───── */}
       <header style={{
         borderBottom: "1px solid rgba(255,255,255,0.03)",
         backdropFilter: "blur(40px)",
@@ -174,7 +161,6 @@ export default function DashboardPage() {
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ maxWidth: "1360px", margin: "0 auto", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", gap: "40px" }}>
-          
           <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
             <div style={{
               width: "36px", height: "36px", borderRadius: "10px",
@@ -186,10 +172,10 @@ export default function DashboardPage() {
               📊
             </div>
             <div>
-              <p style={{ fontSize: "0.9rem", fontWeight: 800, color: "var(--text-primary)", letterSpacing: "0.02em", lineHeight: 1.2 }}>
+              <p style={{ fontSize: "0.9rem", fontWeight: 800, color: "#f8fafc", letterSpacing: "0.02em", lineHeight: 1.2 }}>
                 Sentiment Predictor
               </p>
-              <p style={{ fontSize: "0.55rem", color: "var(--text-muted)", letterSpacing: "0.15em", textTransform: "uppercase" }}>
+              <p style={{ fontSize: "0.55rem", color: "#94a3b8", letterSpacing: "0.15em", textTransform: "uppercase" }}>
                 Minimal Futuristic
               </p>
             </div>
@@ -209,7 +195,6 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* ───── メイン ───── */}
       <main style={{ maxWidth: "1360px", margin: "0 auto", padding: "40px", position: "relative", zIndex: 1 }}>
         {isLoading && <LoadingState />}
         {error && !isLoading && <ErrorState message={error} />}
@@ -218,15 +203,21 @@ export default function DashboardPage() {
         {prediction && !isLoading && (
           <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
             <StockPriceCard data={prediction} />
-            <AIAnalysisSummary 
-              articles={prediction.news_articles} 
-              summary={prediction.sentiment_summary} 
+            <AIAnalysisEngine 
+              summary={prediction.sentiment_summary}
+              ticker={prediction.ticker}
+              direction={prediction.predicted_direction}
+              confidence={prediction.confidence}
+              sentimentScore={prediction.sentiment_score}
+              analysis={prediction.analysis}
+              scores={prediction.scores}
+              judgment={prediction.judgment}
             />
           </div>
         )}
       </main>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.02)", padding: "24px 40px", textAlign: "center", color: "var(--text-muted)", fontSize: "0.65rem" }}>
+      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.02)", padding: "24px 40px", textAlign: "center", color: "#94a3b8", fontSize: "0.65rem" }}>
         <p style={{ letterSpacing: "0.05em" }}>SENTIMENT STOCK PREDICTOR &copy; 2026 ・ POWERED BY GEMINI AI</p>
       </footer>
     </div>
@@ -235,30 +226,30 @@ export default function DashboardPage() {
 
 function LoadingState() {
   return (
-    <div className="glass-card" style={{ padding: "80px 40px", textAlign: "center" }}>
-      <div style={{ width: "48px", height: "48px", border: "2px solid rgba(56,189,248,0.1)", borderTopColor: "#38bdf8", borderRadius: "50%", margin: "0 auto 24px" }} className="animate-spin-slow" />
-      <p style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "8px" }}>銘柄をAIが詳細解析中</p>
-      <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>一次情報（適時開示）と二次情報（SNS）のセンチメントを計算しています...</p>
+    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-20 text-center">
+      <div className="w-12 h-12 border-2 border-sky-500/10 border-t-sky-500 rounded-full animate-spin mx-auto mb-6" />
+      <p className="font-bold text-lg mb-2 text-slate-100">銘柄をAIが詳細解析中</p>
+      <p className="text-sm text-slate-400">一次情報（適時開示）と二次情報（SNS）のセンチメントを計算しています...</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="glass-card" style={{ padding: "40px", textAlign: "center", borderColor: "rgba(244,63,94,0.2)" }}>
-      <p style={{ fontSize: "2rem", marginBottom: "16px" }}>⚠️</p>
-      <p style={{ color: "#f43f5e", fontWeight: 700, marginBottom: "8px" }}>解析に失敗しました</p>
-      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>{message}</p>
+    <div className="bg-slate-900/40 border border-rose-500/20 rounded-2xl p-10 text-center">
+      <p className="text-3xl mb-4">⚠️</p>
+      <p className="text-rose-400 font-bold mb-2">解析に失敗しました</p>
+      <p className="text-slate-400 text-sm">{message}</p>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="glass-card" style={{ padding: "100px 40px", textAlign: "center" }}>
-      <p style={{ fontSize: "3rem", marginBottom: "20px" }}>📈</p>
-      <p style={{ fontWeight: 800, fontSize: "1.3rem", marginBottom: "12px", color: "var(--text-primary)" }}>銘柄レポートを生成します</p>
-      <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", maxWidth: "400px", margin: "0 auto" }}>最先端のAIが最新の適時開示情報と世論を統合し、即時にセンチメントを可視化します。</p>
+    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-24 text-center">
+      <p className="text-4xl mb-6">📈</p>
+      <p className="font-bold text-xl mb-3 text-slate-100">銘柄レポートを生成します</p>
+      <p className="text-slate-400 text-sm max-w-sm mx-auto">最先端のAIが最新の適時開示情報と世論を統合し、即時にセンチメントを可視化します。</p>
     </div>
   );
 }

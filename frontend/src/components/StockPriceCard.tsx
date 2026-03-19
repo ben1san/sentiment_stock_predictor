@@ -154,7 +154,11 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
             決算・適時開示
           </p>
         </div>
-        <SentimentGauge score={data.sentiment_score} label="一次情報" size={140} />
+        <SentimentGauge 
+          score={data.scores?.fundamental ?? data.sentiment_score} 
+          label="一次情報" 
+          size={140} 
+        />
       </div>
 
       {/* ───── SNS センチメントゲージ (二次情報) ───── */}
@@ -182,7 +186,11 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
             SNS・世論
           </p>
         </div>
-        <SentimentGauge score={data.sentiment_score} label="二次情報" size={140} />
+        <SentimentGauge 
+          score={data.scores?.social ?? data.sentiment_score} 
+          label="二次情報" 
+          size={140} 
+        />
       </div>
     </div>
   );

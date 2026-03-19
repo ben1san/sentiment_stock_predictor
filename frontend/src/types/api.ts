@@ -17,6 +17,18 @@ export interface SentimentResult {
   source: string;
 }
 
+export interface AnalysisDetails {
+  fundamental_reason: string;
+  social_insight: string;
+  risk_factor: string;
+}
+
+export interface PredictionScores {
+  fundamental: number;
+  social: number;
+  gap: number;
+}
+
 export interface PredictionResponse {
   ticker: string;
   company_name: string | null;
@@ -26,6 +38,12 @@ export interface PredictionResponse {
   confidence: number;
   sentiment_score: number;
   sentiment_label: "positive" | "neutral" | "negative";
+  
+  // 詳細分析 (新要件)
+  analysis?: AnalysisDetails;
+  scores?: PredictionScores;
+  judgment?: "BUY" | "HOLD" | "WATCH";
+  
   sentiment_summary: string;
   news_articles: SentimentResult[];
   price_history: StockPricePoint[];
