@@ -5,22 +5,27 @@ import requests
 import asyncio
 from io import BytesIO
 from PIL import Image
-import google.generativeai as genai
-from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
-load_dotenv()
+from app.config import get_settings
+
 logger = logging.getLogger(__name__)
 
-# Configure Gemini API
-api_key = os.getenv("GEMINI_API_KEY")
+# Configure Gemini API Client
+settings = get_settings()
+api_key = settings.gemini_api_key
+
 if not api_key or api_key == "YOUR_ACTUAL_API_KEY_HERE":
     logger.warning("GEMINI_API_KEY is not set correctly. AI analysis will fail or use mock.")
-    genai.configure(api_key="DUMMY_KEY") # Prevent crash on load
+    # We will initialize the client dynamically in the function to avoid global state issues if key is missing,
+    # or just use None
+    genai_client = None
 else:
-    genai.configure(api_key=api_key)
+    genai_client = genai.Client(api_key=api_key)
 
 # Use the latest fast multimodal model for hackathon
-MODEL_NAME = 'gemini-3-flash-preview'
+MODEL_NAME = 'gemini-flash-latest'
 
 def download_image(url: str) -> Image.Image | None:
     """Downloads an image from URL and converts it to PIL Image in memory."""
@@ -39,8 +44,9 @@ def download_image(url: str) -> Image.Image | None:
 async def analyze_wsb_post(title: str, body: str, image_url: str = None, finbert_label: str = "Unknown", finbert_score: float = 0.0) -> dict:
     """Analyzes Reddit post (text+image) using Gemini 3 Flash and returns JSON."""
     
+    settings = get_settings()
     # Robustness: Mock fallback if API key is missing or mock mode is on
-    if not os.getenv("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY") == "YOUR_ACTUAL_API_KEY_HERE" or os.getenv("USE_MOCK_DATA", "False") == "True":
+    if not settings.gemini_api_key or settings.gemini_api_key == "YOUR_ACTUAL_API_KEY_HERE" or os.getenv("USE_MOCK_DATA", "False") == "True":
         logger.info("[MOCK] Returning mock AI analysis.")
         return {
             "sentiment": "Bullish",
@@ -50,7 +56,6 @@ async def analyze_wsb_post(title: str, body: str, image_url: str = None, finbert
         }
 
     try:
-        model = genai.GenerativeModel(MODEL_NAME)
         
         # System prompt defined within the call to include FinBERT context
         system_prompt = f"""
@@ -85,14 +90,20 @@ async def analyze_wsb_post(title: str, body: str, image_url: str = None, finbert
                 contents.append(image)
                 logger.info(f"Including image in Gemini analysis for post: {title[:20]}...")
 
+        if not genai_client:
+            raise ValueError("Gemini API Client is not configured")
+
         # Force JSON response via generation config - use async method
-        response = await model.generate_content_async(
-            contents,
-            generation_config={"response_mime_type": "application/json"}
+        # Note: google-genai supports async calls via client.aio.models.generate_content
+        response = await genai_client.aio.models.generate_content(
+            model=MODEL_NAME,
+            contents=contents
         )
         
         # Parse the JSON string result
-        return json.loads(response.text)
+        text = response.text.strip()
+        text = text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)
 
     except Exception as e:
         logger.error(f"Gemini API Error: {e}")

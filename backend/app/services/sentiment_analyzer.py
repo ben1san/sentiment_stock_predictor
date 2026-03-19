@@ -10,8 +10,10 @@ import asyncio
 import json
 import logging
 import re
+import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 from app.config import get_settings
 from app.models.schemas import SentimentArticle, SentimentResult
@@ -27,127 +29,135 @@ GEMINI_MODEL = "models/gemini-1.5-flash"
 
 SENTIMENT_PROMPT_TEMPLATE = """\
 あなたは株式市場の専門的なアナリストです。
-以下のテキストを読み、株価に対するセンチメント（感情・見通し）を分析してください。
+以下のテキストリストを読み、各テキストの株価に対するセンチメント（感情・見通し）を分析してください。
 
-【テキスト】
-タイトル: {title}
-本文: {body}
+【テキストリスト】
+{articles_text}
 
 【指示】
-1. センチメントスコアを -1.0（非常にネガティブ）〜 +1.0（非常にポジティブ）の範囲で数値化してください。
+1. 各テキストごとにセンチメントスコアを -1.0（非常にネガティブ）〜 +1.0（非常にポジティブ）の間で数値化してください。
 2. ラベルを "positive"（0.1以上）, "neutral"（-0.1〜0.1）, "negative"（-0.1以下）のいずれかで分類してください。
 3. そのスコアを付けた根拠を日本語で50〜100文字で説明してください。
 
-【出力形式】（JSON のみ。余計な説明は不要）
-{{
-  "score": <float>,
-  "label": "<positive|neutral|negative>",
-  "explanation": "<根拠の説明>"
-}}
+【出力形式】（JSON配列のみ。余計な説明は絶対に出力しないでください）
+[
+  {{
+    "index": <対応するテキストのインデックス(0から始まる整数)>,
+    "score": <float>,
+    "label": "<positive|neutral|negative>",
+    "explanation": "<根拠の説明>"
+  }}
+]
 """
 
 
-def _configure_genai() -> bool:
-    """Gemini API キーを設定します。未設定の場合は False を返します。"""
+def _get_genai_client() -> genai.Client | None:
+    """Gemini API クライアントを取得します。未設定の場合は None を返します。"""
     settings = get_settings()
     if not settings.gemini_api_key:
         logger.warning(
             "GEMINI_API_KEY が設定されていません。モック分析を使用します。"
         )
-        return False
-    genai.configure(api_key=settings.gemini_api_key)
-    return True
+        return None
+    return genai.Client(api_key=settings.gemini_api_key)
 
 
 async def analyze_sentiment(article: SentimentArticle) -> SentimentResult:
-    """単一記事のセンチメントを Gemini API で分析します。
-
-    Args:
-        article: 分析対象の記事・投稿データ。
-
-    Returns:
-        センチメント分析結果。
-    """
-    if not _configure_genai():
-        return _mock_sentiment(article)
-
-    prompt = SENTIMENT_PROMPT_TEMPLATE.format(
-        title=article.title,
-        body=article.body or "（本文なし）",
-    )
-
-    try:
-        result = await asyncio.to_thread(_sync_generate, prompt)
-        return SentimentResult(
-            title=article.title,
-            score=result["score"],
-            label=result["label"],
-            explanation=result["explanation"],
-            source=article.source,
-        )
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("Gemini API 呼び出しに失敗しました: %s", exc)
-        return _mock_sentiment(article)
+    """単一記事のセンチメントを Gemini API で分析（バッチ処理を利用）。"""
+    results = await analyze_sentiment_batch([article])
+    return results[0] if results else _mock_sentiment(article)
 
 
 async def analyze_sentiment_batch(
     articles: list[SentimentArticle],
     concurrency: int = 5,
 ) -> list[SentimentResult]:
-    """複数記事を並列でセンチメント分析します。
-
-    Args:
-        articles: 分析対象の記事リスト。
-        concurrency: 同時実行数（Gemini API のレート制限に配慮）。
-
-    Returns:
-        センチメント分析結果のリスト。
+    """複数記事を一度のプロンプトでセンチメント分析します。
+    （API のレート制限を回避するため、複数記事をまとめてリクエストします）
     """
-    semaphore = asyncio.Semaphore(concurrency)
+    if not articles:
+        return []
 
-    async def _analyze_with_limit(article: SentimentArticle) -> SentimentResult:
-        async with semaphore:
-            # レート制限対策: 各リクエスト間に少し待機
-            await asyncio.sleep(0.3)
-            return await analyze_sentiment(article)
+    client = _get_genai_client()
+    if not client:
+        return [_mock_sentiment(a) for a in articles]
 
-    results = await asyncio.gather(
-        *[_analyze_with_limit(a) for a in articles],
-        return_exceptions=False,
+    # 一度に送信するテキストを構築
+    articles_text = ""
+    for i, a in enumerate(articles):
+        articles_text += f"---\n[Index: {i}]\nタイトル: {a.title}\n本文: {a.body or 'なし'}\n"
+
+    prompt = SENTIMENT_PROMPT_TEMPLATE.format(
+        articles_text=articles_text
     )
-    return list(results)
+
+    try:
+        response = await asyncio.to_thread(_sync_generate_batch, client, prompt)
+        
+        # 結果をマッピング
+        results = []
+        for i, article in enumerate(articles):
+            res_dict = next((r for r in response if r.get("index") == i), None)
+            if res_dict:
+                results.append(
+                    SentimentResult(
+                        title=article.title,
+                        score=res_dict["score"],
+                        label=res_dict["label"],
+                        explanation=res_dict["explanation"],
+                        source=article.source,
+                    )
+                )
+            else:
+                results.append(_mock_sentiment(article))
+        return results
+
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Gemini API バッチ呼び出しに失敗しました: %s", exc)
+        return [_mock_sentiment(a) for a in articles]
 
 
-def _sync_generate(prompt: str) -> dict:
-    """Gemini API を同期的に呼び出し、JSON レスポンスをパースします。"""
-    model = genai.GenerativeModel(GEMINI_MODEL)
-    response = model.generate_content(
-        prompt,
-        generation_config=genai.types.GenerationConfig(
-            temperature=0.1,  # 一貫性重視
-            max_output_tokens=256,
+def _sync_generate_batch(client: genai.Client, prompt: str) -> list[dict]:
+    """Gemini API を同期的に呼び出し、JSON配列レスポンスをパースします。"""
+    
+    response = client.models.generate_content(
+        model=GEMINI_MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            temperature=0.1,  
+            max_output_tokens=8192,  # 複数記事のため十分大きめに設定
+            response_mime_type="application/json",
         ),
     )
 
     text = response.text.strip()
-    # Markdown コードブロックを除去
     text = re.sub(r"```(?:json)?\s*", "", text).strip().rstrip("```").strip()
+    
+    try:
+        parsed_list = json.loads(text)
+        if not isinstance(parsed_list, list):
+            parsed_list = [parsed_list] # 単一オブジェクトの場合はリスト化
+    except Exception as e:
+        logger.error("JSON batch parse failed. Raw text: %s", text)
+        raise e
 
-    parsed = json.loads(text)
+    # クリーンアップ
+    cleaned_list = []
+    for item in parsed_list:
+        score = float(item.get("score", 0.0))
+        score = max(-1.0, min(1.0, score))
+        label = item.get("label", "neutral")
+        if label not in ("positive", "neutral", "negative"):
+            label = _score_to_label(score)
+            
+        cleaned_list.append({
+            "index": item.get("index", 0),
+            "score": score,
+            "label": label,
+            "explanation": str(item.get("explanation", "分析結果なし"))[:200],
+        })
 
-    # バリデーション
-    score = float(parsed.get("score", 0.0))
-    score = max(-1.0, min(1.0, score))  # クランプ
-
-    label = parsed.get("label", "neutral")
-    if label not in ("positive", "neutral", "negative"):
-        label = _score_to_label(score)
-
-    return {
-        "score": score,
-        "label": label,
-        "explanation": str(parsed.get("explanation", "分析結果なし"))[:200],
-    }
+    return cleaned_list
 
 
 def _score_to_label(score: float) -> str:
