@@ -76,7 +76,7 @@ class StockDataResponse(BaseModel):
 class PredictionRequest(BaseModel):
     """株価予測リクエスト。"""
 
-    ticker: str = Field(..., description="銘柄ティッカー（例: 7203.T）")
+    ticker: str = Field(..., description="銘柄ティッカー(例: 7203.T)")
     period_days: int = Field(30, ge=7, le=365, description="過去データの取得日数")
 
 

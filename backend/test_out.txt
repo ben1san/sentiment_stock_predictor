@@ -1,0 +1,100 @@
+DEBUG:asyncio:Using selector: KqueueSelector
+INFO:google_genai.models:AFC is enabled with max remote calls: 10.
+DEBUG:httpcore.connection:connect_tcp.started host='generativelanguage.googleapis.com' port=443 local_address=None timeout=None socket_options=None
+DEBUG:httpcore.connection:connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x10ac4a660>
+DEBUG:httpcore.connection:start_tls.started ssl_context=<ssl.SSLContext object at 0x10ab64560> server_hostname='generativelanguage.googleapis.com' timeout=None
+DEBUG:httpcore.connection:start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x10aada350>
+DEBUG:httpcore.http11:send_request_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_headers.complete
+DEBUG:httpcore.http11:send_request_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:send_request_body.complete
+DEBUG:httpcore.http11:receive_response_headers.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Type', b'application/json; charset=UTF-8'), (b'Vary', b'Origin'), (b'Vary', b'X-Origin'), (b'Vary', b'Referer'), (b'Content-Encoding', b'gzip'), (b'Date', b'Wed, 18 Mar 2026 01:38:08 GMT'), (b'Server', b'scaffolding on HTTPServer2'), (b'X-XSS-Protection', b'0'), (b'X-Frame-Options', b'SAMEORIGIN'), (b'X-Content-Type-Options', b'nosniff'), (b'Server-Timing', b'gfet4t7; dur=10023'), (b'Alt-Svc', b'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'), (b'Transfer-Encoding', b'chunked')])
+INFO:httpx:HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent "HTTP/1.1 200 OK"
+DEBUG:httpcore.http11:receive_response_body.started request=<Request [b'POST']>
+DEBUG:httpcore.http11:receive_response_body.complete
+DEBUG:httpcore.http11:response_closed.started
+DEBUG:httpcore.http11:response_closed.complete
+ERROR:app.services.sentiment_analyzer:JSON batch parse failed. Raw text: [
+  {
+    "index": 0,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 1,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 2,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 3,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 4,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 5,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 6,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 7,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+    "index": 8,
+    "score": 0.8,
+    "label": "positive",
+    "explanation": "iPhone 17への衛星通信機能搭載という革新的な技術への期待感に加え、将来的な株価上昇の可能性に直接言及しているため、非常にポジティブな内容と判断した。投資家の心理を前向きにさせる材料である。"
+  },
+  {
+ERROR:app.services.sentiment_analyzer:Gemini API バッチ呼び出しに失敗しました: Expecting property name enclosed in double quotes: line 56 column 4 (char 1697)
+Traceback (most recent call last):
+  File "/Users/beni/workspace/projects/sentiment_stock_predictor/backend/app/services/sentiment_analyzer.py", line 95, in analyze_sentiment_batch
+    response = await asyncio.to_thread(_sync_generate_batch, client, prompt)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/beni/.local/share/uv/python/cpython-3.13.5-macos-aarch64-none/lib/python3.13/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/beni/.local/share/uv/python/cpython-3.13.5-macos-aarch64-none/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/beni/workspace/projects/sentiment_stock_predictor/backend/app/services/sentiment_analyzer.py", line 142, in _sync_generate_batch
+    raise e
+  File "/Users/beni/workspace/projects/sentiment_stock_predictor/backend/app/services/sentiment_analyzer.py", line 137, in _sync_generate_batch
+    parsed_list = json.loads(text)
+  File "/Users/beni/.local/share/uv/python/cpython-3.13.5-macos-aarch64-none/lib/python3.13/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/Users/beni/.local/share/uv/python/cpython-3.13.5-macos-aarch64-none/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/beni/.local/share/uv/python/cpython-3.13.5-macos-aarch64-none/lib/python3.13/json/decoder.py", line 361, in raw_decode
+    obj, end = self.scan_once(s, idx)
+               ~~~~~~~~~~~~~~^^^^^^^^
+json.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 56 column 4 (char 1697)
+DEBUG:httpcore.connection:close.started
+DEBUG:httpcore.connection:close.complete
+[SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit'), SentimentResult(title='Apple seems to be testing the iPhone 17 with satellite-to-cell connectivity', score=0.05, label='neutral', explanation='特定の方向性キーワードが少なく、中立的な内容と判断（モックデータ）。', source='reddit')]
