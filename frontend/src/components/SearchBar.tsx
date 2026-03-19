@@ -311,7 +311,7 @@ export default function CyberSearchBar({ onSearch, isLoading }: CyberSearchBarPr
         }}
       >
         <p style={{ color: "rgba(251,191,36,0.7)", fontSize: "0.67rem", lineHeight: 1.5 }}>
-          ⚠️ 本ツールは投資助言ではありません
+          ⚠️結果は投資利益を保証するものではありません
         </p>
       </div>
     </div>

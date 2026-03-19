@@ -3,8 +3,12 @@
 import React, { useState, useCallback } from "react";
 import { fetchPrediction } from "@/lib/api";
 import type { PredictionResponse } from "@/types/api";
-import StockPriceCard from "@/components/StockPriceCard";
-import AIAnalysisSummary from "@/components/AIAnalysisSummary";
+import PredictionCard from "@/components/PredictionCard";
+import AIAnalysisEngine from "@/components/AIAnalysisEngine";
+import PriceChart from "@/components/PriceChart";
+import SentimentGauge from "@/components/SentimentGauge";
+import SentimentReasoning from "@/components/SentimentReasoning";
+import CyberSearchBar from "@/components/SearchBar";
 
 /* ── トヨタ(7203)ダミーデータ ── */
 const DUMMY_DATA: PredictionResponse = {
@@ -52,7 +56,17 @@ const DUMMY_DATA: PredictionResponse = {
       source: "Public",
     },
   ],
-  price_history: [],
+  price_history: Array.from({ length: 30 }).map((_, i) => {
+    const close = 28000 + Math.random() * 1000 - 500 + i * 20;
+    return {
+      date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString(),
+      open: close - Math.random() * 200,
+      high: close + Math.random() * 200,
+      low: close - Math.random() * 400,
+      close: close,
+      volume: 1000000 + Math.random() * 500000
+    };
+  }),
   generated_at: new Date().toISOString(),
 };
 
@@ -70,7 +84,7 @@ function HeaderSearchBar({
   onSearch,
   isLoading,
 }: {
-  onSearch: (ticker: string) => void;
+  onSearch: (ticker: string, days: number) => void;
   isLoading: boolean;
 }) {
   const [ticker, setTicker] = useState("7203.T");
@@ -78,7 +92,7 @@ function HeaderSearchBar({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (ticker.trim()) onSearch(ticker.trim().toUpperCase());
+    if (ticker.trim()) onSearch(ticker.trim().toUpperCase(), 30);
   };
 
   return (
@@ -89,7 +103,7 @@ function HeaderSearchBar({
       <div style={{ position: "relative", flex: 1 }}>
         {/* 指紋/光沢アニメーション */}
         <input
-          id="ticker-input"
+          id="header-ticker-input"
           type="text"
           value={ticker}
           onChange={(e) => setTicker(e.target.value)}
@@ -122,13 +136,13 @@ function HeaderSearchBar({
         )}
       </div>
       <button
-        id="predict-btn"
+        id="header-predict-btn"
         type="submit"
         disabled={isLoading}
         className="btn-primary"
-        style={{ 
+        style={{
           padding: "10px 24px", fontSize: "0.85rem", whiteSpace: "nowrap",
-          borderRadius: "12px", boxShadow: "0 0 16px rgba(56,189,248,0.15)" 
+          borderRadius: "12px", boxShadow: "0 0 16px rgba(56,189,248,0.15)"
         }}
       >
         {isLoading ? "ANALYZING..." : "ANALYZE"}
@@ -142,12 +156,12 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = useCallback(async (ticker: string) => {
+  const handleSearch = useCallback(async (ticker: string, days: number = 30) => {
     setIsLoading(true);
     setError(null);
     setPrediction(null);
     try {
-      const data = await fetchPrediction(ticker, 30);
+      const data = await fetchPrediction(ticker, days);
       setPrediction(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "予期しないエラーが発生しました");
@@ -159,10 +173,12 @@ export default function DashboardPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#06090c", position: "relative", color: "#f8fafc" }}>
       {/* 高級感のある背景装飾 */}
-      <div 
-        style={{ position: "fixed", inset: 0, 
-        backgroundImage: "radial-gradient(circle at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.04) 0%, transparent 35%)",
-        pointerEvents: "none", zIndex: 0 }} 
+      <div
+        style={{
+          position: "fixed", inset: 0,
+          backgroundImage: "radial-gradient(circle at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.04) 0%, transparent 35%)",
+          pointerEvents: "none", zIndex: 0
+        }}
       />
       <div className="cyber-grid" style={{ position: "fixed", inset: 0, opacity: 0.15, pointerEvents: "none" }} />
 
@@ -174,7 +190,7 @@ export default function DashboardPage() {
         position: "sticky", top: 0, zIndex: 100,
       }}>
         <div style={{ maxWidth: "1360px", margin: "0 auto", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", gap: "40px" }}>
-          
+
           <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
             <div style={{
               width: "36px", height: "36px", borderRadius: "10px",
@@ -210,20 +226,49 @@ export default function DashboardPage() {
       </header>
 
       {/* ───── メイン ───── */}
-      <main style={{ maxWidth: "1360px", margin: "0 auto", padding: "40px", position: "relative", zIndex: 1 }}>
-        {isLoading && <LoadingState />}
-        {error && !isLoading && <ErrorState message={error} />}
-        {!prediction && !isLoading && !error && <EmptyState />}
+      <main style={{
+        maxWidth: "1360px",
+        margin: "0 auto",
+        padding: "40px",
+        position: "relative",
+        zIndex: 1,
+        display: "grid",
+        gridTemplateColumns: "1fr 320px",
+        gap: "24px",
+        alignItems: "start"
+      }}>
+        {/* 左側: メインコンテンツ */}
+        <div style={{ minHeight: "600px" }}>
+          {isLoading && <LoadingState />}
+          {error && !isLoading && <ErrorState message={error} />}
+          {!prediction && !isLoading && !error && <EmptyState />}
 
-        {prediction && !isLoading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-            <StockPriceCard data={prediction} />
-            <AIAnalysisSummary 
-              articles={prediction.news_articles} 
-              summary={prediction.sentiment_summary} 
-            />
-          </div>
-        )}
+          {prediction && !isLoading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+              {/* トップ: ヘッダー的な予測カード */}
+              
+              <div className="glass-card" style={{ padding: "24px", display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
+                    <SentimentGauge score={prediction.sentiment_score} label="総合センチメント" size={220} />
+                  </div>
+
+              {/* 中断: 予測カード */}
+              <PredictionCard data={prediction} />
+
+              {/* 下段2: 理由とニュースリスト */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "24px" }}>
+                <SentimentReasoning articles={prediction.news_articles} ticker={prediction.ticker} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 右側: サイドバー (SearchBar + PriceChart) */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          <CyberSearchBar onSearch={handleSearch} isLoading={isLoading} />
+          {prediction && !isLoading && (
+            <PriceChart prices={prediction.price_history} ticker={prediction.ticker} />
+          )}
+        </div>
       </main>
 
       <footer style={{ borderTop: "1px solid rgba(255,255,255,0.02)", padding: "24px 40px", textAlign: "center", color: "var(--text-muted)", fontSize: "0.65rem" }}>
