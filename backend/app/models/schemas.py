@@ -80,8 +80,24 @@ class PredictionRequest(BaseModel):
     period_days: int = Field(30, ge=7, le=365, description="過去データの取得日数")
 
 
+class AnalysisDetails(BaseModel):
+    """アナリストによる詳細分析内容。"""
+
+    fundamental_reason: str = Field(..., description="業績面・ファンダメンタルズの分析要約")
+    social_insight: str = Field(..., description="SNSの熱量や質の分析")
+    risk_factor: str = Field(..., description="懸念点やリスク要因")
+
+
+class PredictionScores(BaseModel):
+    """各種センチメントスコア。"""
+
+    fundamental: float = Field(..., ge=-1.0, le=1.0, description="決算の本質的な強さ (-1.0 to 1.0)")
+    social: float = Field(..., ge=-1.0, le=1.0, description="SNSでの盛り上がりとポジティブさ (-1.0 to 1.0)")
+    gap: float = Field(..., description="情報伝達の乖離 (fundamental - social)")
+
+
 class PredictionResponse(BaseModel):
-    """株価予測レスポンス。"""
+    """株価予測レスポンス（詳細分析版）。"""
 
     ticker: str
     company_name: str | None
@@ -89,8 +105,16 @@ class PredictionResponse(BaseModel):
     predicted_direction: Literal["up", "down", "neutral"]
     predicted_change_pct: float = Field(..., description="予測変動率 (%)")
     confidence: float = Field(..., ge=0.0, le=1.0, description="信頼度 (0〜1)")
+    
+    # スコア集計
     sentiment_score: float = Field(..., ge=-1.0, le=1.0)
     sentiment_label: Literal["positive", "neutral", "negative"]
+    
+    # 詳細分析 (新要件)
+    analysis: AnalysisDetails | None = None
+    scores: PredictionScores | None = None
+    judgment: Literal["BUY", "HOLD", "WATCH"] | None = None
+    
     sentiment_summary: str
     news_articles: list[SentimentResult]
     price_history: list[StockPricePoint]

@@ -60,7 +60,7 @@ export default function PriceChart({ prices, ticker }: PriceChartProps) {
     <div className="glass-card animate-fade-in-up" style={{ padding: "24px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "var(--text-primary)" }}>
-          📈 株価チャート
+          株価チャート
         </h3>
         <div style={{ display: "flex", gap: "12px", fontSize: "0.8rem" }}>
           <span style={{ color: "var(--text-secondary)" }}>

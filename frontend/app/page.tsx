@@ -9,6 +9,7 @@ import PriceChart from "@/components/PriceChart";
 import SentimentGauge from "@/components/SentimentGauge";
 import SentimentReasoning from "@/components/SentimentReasoning";
 import CyberSearchBar from "@/components/SearchBar";
+import StockPriceCard from "@/components/StockPriceCard";
 
 /* ── トヨタ(7203)ダミーデータ ── */
 const DUMMY_DATA: PredictionResponse = {
@@ -22,6 +23,18 @@ const DUMMY_DATA: PredictionResponse = {
   sentiment_label: "positive",
   sentiment_summary:
     "トヨタ自動車（7203）は、第3四半期において過去最高の営業利益を記録。北米市場でのハイブリッド車需要の拡大と、徹底したコスト削減施策が奏功し、強固な収益基盤を構築しています。中国市場での競争激化などの懸念材料はあるものの、全体として非常に強力な成長モメンタムを維持しています。",
+  // page_changed.tsx で追加された新フィールド
+  analysis: {
+    fundamental_reason: "過去最高の営業利益と北米市場の好調が継続。供給網の安定化により通期見通しも明るい。",
+    social_insight: "新型ハイブリッド車への期待感と利益水準への驚きがポジティブに反応。",
+    risk_factor: "中国市場での販売シェア減と、原材料コストの変動が主要なリスク。"
+  },
+  scores: {
+    fundamental: 0.82,
+    social: 0.45,
+    gap: 0.37
+  },
+  judgment: "BUY",
   news_articles: [
     {
       title: "業績：第3四半期営業利益が過去最高更新",
@@ -70,7 +83,7 @@ const DUMMY_DATA: PredictionResponse = {
   generated_at: new Date().toISOString(),
 };
 
-/* ── インラインサーチバー ── */
+/* ── 人気銘柄リスト ── */
 const POPULAR_TICKERS = [
   { label: "トヨタ", value: "7203.T" },
   { label: "任天堂", value: "7974.T" },
@@ -80,6 +93,8 @@ const POPULAR_TICKERS = [
   { label: "NVIDIA", value: "NVDA" },
 ];
 
+/* ── ヘッダー内サーチバー ── */
+// page1.tsx の引数シグネチャ (ticker, days) を維持
 function HeaderSearchBar({
   onSearch,
   isLoading,
@@ -156,6 +171,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // page1.tsx の (ticker, days) シグネチャを維持
   const handleSearch = useCallback(async (ticker: string, days: number = 30) => {
     setIsLoading(true);
     setError(null);
@@ -180,6 +196,7 @@ export default function DashboardPage() {
           pointerEvents: "none", zIndex: 0
         }}
       />
+      {/* page1.tsx のサイバーグリッド背景を維持 */}
       <div className="cyber-grid" style={{ position: "fixed", inset: 0, opacity: 0.15, pointerEvents: "none" }} />
 
       {/* ───── ヘッダー ───── */}
@@ -225,7 +242,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      {/* ───── メイン ───── */}
+      {/* ───── メイン (page1.tsx の2カラムレイアウトを維持) ───── */}
       <main style={{
         maxWidth: "1360px",
         margin: "0 auto",
@@ -245,16 +262,29 @@ export default function DashboardPage() {
 
           {prediction && !isLoading && (
             <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
-              {/* トップ: ヘッダー的な予測カード */}
-              
+              {/* page_changed.tsx で追加: StockPriceCard */}
+              <StockPriceCard data={prediction} />
+
+              {/* センチメントゲージ */}
               <div className="glass-card" style={{ padding: "24px", display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "column" }}>
-                    <SentimentGauge score={prediction.sentiment_score} label="総合センチメント" size={220} />
-                  </div>
+                <SentimentGauge score={prediction.sentiment_score} label="総合センチメント" size={220} />
+              </div>
 
-              {/* 中断: 予測カード */}
-              <PredictionCard data={prediction} />
 
-              {/* 下段2: 理由とニュースリスト */}
+
+              {/* page_changed.tsx で拡張: AIAnalysisEngine に analysis/scores/judgment を渡す */}
+              <AIAnalysisEngine
+                summary={prediction.sentiment_summary}
+                ticker={prediction.ticker}
+                direction={prediction.predicted_direction}
+                confidence={prediction.confidence}
+                sentimentScore={prediction.sentiment_score}
+                analysis={prediction.analysis}
+                scores={prediction.scores}
+                judgment={prediction.judgment}
+              />
+
+              {/* ニュース一覧 (page1.tsx) */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "24px" }}>
                 <SentimentReasoning articles={prediction.news_articles} ticker={prediction.ticker} />
               </div>
@@ -262,7 +292,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* 右側: サイドバー (SearchBar + PriceChart) */}
+        {/* 右側: サイドバー (page1.tsx のCyberSearchBar + PriceChart を維持) */}
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           <CyberSearchBar onSearch={handleSearch} isLoading={isLoading} />
           {prediction && !isLoading && (

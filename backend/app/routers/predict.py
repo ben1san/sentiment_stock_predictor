@@ -13,7 +13,10 @@ from app.models.schemas import (
     PredictionResponse,
     SentimentArticle,
 )
-from app.services.sentiment_analyzer import analyze_sentiment_batch
+from app.services.sentiment_analyzer import (
+    analyze_sentiment_batch,
+    analyze_comprehensive_sentiment,
+)
 from app.services.stock_fetcher import fetch_stock_data
 
 router = APIRouter(prefix="/api/predict", tags=["prediction"])
@@ -65,7 +68,7 @@ async def run_prediction(req: PredictionRequest) -> PredictionResponse:
     base_code = ticker.split(".")[0]
     company_name = stock_data.company_name or base_code
 
-    tdnet_articles = await fetch_latest_disclosures(ticker=base_code, max_items=1)
+    tdnet_articles = await fetch_latest_disclosures(ticker=base_code, max_items=3)
     
     reddit_posts = []
     from app.collectors.reddit_scraper import fetch_reddit_posts_window
@@ -125,16 +128,29 @@ async def run_prediction(req: PredictionRequest) -> PredictionResponse:
             )
         )
 
-    # 4. Gemini でセンチメント分析（最大 20 件）
+    # 4. Gemini でセンチメント分析（各記事 + 総合分析）
     sentiment_results = await analyze_sentiment_batch(articles[:20])
+    
+    # 5. 総合アナリスト分析を実行 (新要件)
+    comp_analysis = await analyze_comprehensive_sentiment(
+        ticker=ticker,
+        company_name=company_name,
+        tdnet_articles=[a for a in articles if a.source == "tdnet"],
+        social_articles=[a for a in articles if a.source == "reddit"],
+    )
 
-    # 5. 方向性予測
+    # 6. 方向性予測
     prediction = await predict_stock_direction(
         ticker=ticker,
         company_name=company_name,
         price_history=stock_data.prices,
         sentiment_results=sentiment_results,
     )
+    
+    # 総合分析結果をレスポンスに統合
+    prediction.analysis = comp_analysis.get("analysis")
+    prediction.scores = comp_analysis.get("scores")
+    prediction.judgment = comp_analysis.get("judgment")
 
     return prediction
 

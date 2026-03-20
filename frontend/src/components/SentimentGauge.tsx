@@ -78,6 +78,21 @@ export default function SentimentGauge({
         gap: "10px",
       }}
     >
+      {/* ソースラベル（上部） */}
+      <div style={{ textAlign: "center" }}>
+        <p
+          style={{
+            fontSize: "0.72rem",
+            fontWeight: 700,
+            color: "var(--text-secondary)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </p>
+      </div>
+
       <div style={{ position: "relative", width: size, height: size }}>
         <svg
           width={size}
@@ -184,20 +199,7 @@ export default function SentimentGauge({
         </span>
       </div>
 
-      {/* ソースラベル */}
-      <div style={{ textAlign: "center" }}>
-        <p
-          style={{
-            fontSize: "0.72rem",
-            fontWeight: 700,
-            color: "var(--text-secondary)",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-          }}
-        >
-          {label}
-        </p>
-      </div>
+
     </div>
   );
 }

@@ -8,6 +8,17 @@ interface AIAnalysisEngineProps {
   direction: "up" | "down" | "neutral";
   confidence: number;
   sentimentScore: number;
+  analysis?: {
+    fundamental_reason: string;
+    social_insight: string;
+    risk_factor: string;
+  };
+  scores?: {
+    fundamental: number;
+    social: number;
+    gap: number;
+  };
+  judgment?: "BUY" | "HOLD" | "WATCH";
 }
 
 // ネオンバッジで強調するキーワードのパターン
