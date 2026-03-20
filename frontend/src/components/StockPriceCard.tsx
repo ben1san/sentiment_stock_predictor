@@ -11,7 +11,11 @@ interface StockPriceCardProps {
 const DIRECTION_CONFIG = {
   up: {
     icon: "▲",
+<<<<<<< HEAD
     label: "Positive",
+=======
+    label: "Bullish",
+>>>>>>> origin/beni
     color: "#34d399",
     borderColor: "rgba(52,211,153,0.3)",
     bgColor: "rgba(52,211,153,0.06)",
@@ -19,7 +23,11 @@ const DIRECTION_CONFIG = {
   },
   down: {
     icon: "▼",
+<<<<<<< HEAD
     label: "Negative",
+=======
+    label: "Bearish",
+>>>>>>> origin/beni
     color: "#f43f5e",
     borderColor: "rgba(244,63,94,0.3)",
     bgColor: "rgba(244,63,94,0.06)",
@@ -103,7 +111,11 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
             letterSpacing: "-0.02em", lineHeight: 1, marginBottom: "16px",
           }}
         >
+<<<<<<< HEAD
           ¥{data.current_price?.toLocaleString("ja-JP") ?? "---"}
+=======
+          ¥{data.current_price.toLocaleString("ja-JP")}
+>>>>>>> origin/beni
         </p>
 
         {/* 前日比バッジ */}
@@ -119,9 +131,14 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
             textShadow: `0 0 8px ${dir.color}70`,
           }}>
             {dir.icon}{" "}
+<<<<<<< HEAD
             {data.predicted_change_pct !== undefined && data.predicted_change_pct !== null
               ? `${data.predicted_change_pct >= 0 ? "+" : ""}${data.predicted_change_pct.toFixed(2)}%`
               : "---"}
+=======
+            {data.predicted_change_pct >= 0 ? "+" : ""}
+            {data.predicted_change_pct.toFixed(2)}%
+>>>>>>> origin/beni
           </span>
           <span style={{ fontSize: "0.8rem", color: dir.color, fontWeight: 700 }}>
             {dir.label}
@@ -129,13 +146,18 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* ───── TDnet センチメントゲージ (一次情報) ───── */}
+=======
+      {/* ───── TDnet センチメントゲージ ───── */}
+>>>>>>> origin/beni
       <div
         className="glass-card animate-fade-in-up"
         style={{
           padding: "24px 16px",
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
+<<<<<<< HEAD
           gap: "8px", animationDelay: "0.1s",
           border: "1px solid rgba(255,255,255,0.03)",
         }}
@@ -162,12 +184,28 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
       </div>
 
       {/* ───── SNS センチメントゲージ (二次情報) ───── */}
+=======
+          gap: "4px", animationDelay: "0.1s",
+        }}
+      >
+        <p style={{
+          fontSize: "0.63rem", color: "var(--text-muted)",
+          letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px",
+        }}>
+          適時開示センチメント
+        </p>
+        <SentimentGauge score={data.sentiment_score} label="TDnet Financials" size={150} />
+      </div>
+
+      {/* ───── パブリックセンチメントゲージ ───── */}
+>>>>>>> origin/beni
       <div
         className="glass-card animate-fade-in-up"
         style={{
           padding: "24px 16px",
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center",
+<<<<<<< HEAD
           gap: "8px", animationDelay: "0.2s",
           border: "1px solid rgba(255,255,255,0.03)",
         }}
@@ -191,6 +229,18 @@ export default function StockPriceCard({ data }: StockPriceCardProps) {
           label="二次情報" 
           size={140} 
         />
+=======
+          gap: "4px", animationDelay: "0.2s",
+        }}
+      >
+        <p style={{
+          fontSize: "0.63rem", color: "var(--text-muted)",
+          letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "6px",
+        }}>
+          群衆センチメント
+        </p>
+        <SentimentGauge score={data.sentiment_score} label="Public Opinion" size={150} />
+>>>>>>> origin/beni
       </div>
     </div>
   );

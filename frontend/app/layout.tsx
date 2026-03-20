@@ -27,7 +27,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+<<<<<<< HEAD
     <html lang="ja" className={inter.variable} suppressHydrationWarning>
+=======
+    <html lang="ja" className={inter.variable}>
+>>>>>>> origin/beni
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link

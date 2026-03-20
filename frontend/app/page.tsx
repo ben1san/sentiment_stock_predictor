@@ -82,38 +82,40 @@ function HeaderSearchBar({
       style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, maxWidth: "600px" }}
     >
       <div style={{ position: "relative", flex: 1 }}>
+        {isLoading && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0, left: 0, right: 0, height: "2px",
+              background: "linear-gradient(90deg, transparent, #38bdf8, #34d399, transparent)",
+              animation: "scan 1.8s linear infinite",
+              borderRadius: "999px",
+            }}
+          />
+        )}
         <input
           id="ticker-input"
           type="text"
           value={ticker}
           onChange={(e) => setTicker(e.target.value)}
-          placeholder="銘柄コードを入力 (例: 7203.T / AAPL)"
+          placeholder="銘銘柄コードを入力 (例: 7203.T / AAPL)"
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={{
             width: "100%",
-            background: focused ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-            border: `1px solid ${focused ? "rgba(56,189,248,0.25)" : "rgba(255,255,255,0.04)"}`,
+            background: focused ? "rgba(56,189,248,0.06)" : "rgba(255,255,255,0.04)",
+            border: `1px solid ${focused ? "rgba(56,189,248,0.45)" : "rgba(255,255,255,0.08)"}`,
             borderRadius: "12px",
             padding: "10px 20px",
-            color: "#f8fafc",
+            color: "var(--text-primary)",
             fontSize: "0.95rem",
             fontWeight: 600,
             outline: "none",
             transition: "all 0.3s cubic-bezier(0.19, 1, 0.22, 1)",
             letterSpacing: "0.04em",
+            boxShadow: focused ? "0 0 0 3px rgba(56,189,248,0.1)" : "none",
           }}
         />
-        {isLoading && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0, left: "20px", right: "20px", height: "1px",
-              background: "linear-gradient(90deg, #38bdf8, #34d399, #38bdf8)",
-              animation: "scan 1.5s infinite linear"
-            }}
-          />
-        )}
       </div>
       <button
         id="predict-btn"
@@ -121,7 +123,19 @@ function HeaderSearchBar({
         disabled={isLoading}
         className="px-6 py-2.5 bg-sky-500 hover:bg-sky-400 disabled:bg-slate-700 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 text-sm uppercase tracking-wider"
       >
-        {isLoading ? "ANALYZING..." : "ANALYZE"}
+        {isLoading ? (
+          <span
+            style={{
+              width: "14px", height: "14px",
+              border: "2px solid rgba(255,255,255,0.2)",
+              borderTopColor: "white",
+              borderRadius: "50%", display: "inline-block",
+            }}
+            className="animate-spin-slow"
+          />
+        ) : (
+          "🚀 分析"
+        )}
       </button>
     </form>
   );
@@ -147,55 +161,124 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#06090c", position: "relative", color: "#f8fafc" }}>
-      <div 
-        style={{ position: "fixed", inset: 0, 
-        backgroundImage: "radial-gradient(circle at 50% 0%, rgba(56,189,248,0.06) 0%, transparent 40%), radial-gradient(circle at 100% 100%, rgba(52,211,153,0.04) 0%, transparent 35%)",
-        pointerEvents: "none", zIndex: 0 }} 
+    <div style={{ minHeight: "100vh", background: "#05080A", position: "relative", color: "#f8fafc" }}>
+      {/* サイバーグリッド背景 */}
+      <div
+        className="cyber-grid"
+        style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.35 }}
       />
+      {/* アンビエントグロー */}
+      <div style={{
+        position: "fixed", top: "15%", left: "5%",
+        width: "500px", height: "400px",
+        background: "radial-gradient(circle, rgba(56,189,248,0.04) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0,
+      }} />
+      <div style={{
+        position: "fixed", bottom: "10%", right: "8%",
+        width: "400px", height: "300px",
+        background: "radial-gradient(circle, rgba(52,211,153,0.04) 0%, transparent 70%)",
+        pointerEvents: "none", zIndex: 0,
+      }} />
 
-      <header style={{
-        borderBottom: "1px solid rgba(255,255,255,0.03)",
-        backdropFilter: "blur(40px)",
-        background: "rgba(6,9,12,0.85)",
-        position: "sticky", top: 0, zIndex: 100,
-      }}>
-        <div style={{ maxWidth: "1360px", margin: "0 auto", padding: "0 40px", height: "64px", display: "flex", alignItems: "center", gap: "40px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px", flexShrink: 0 }}>
+      {/* ══════════ ヘッダー（検索バー内蔵） ══════════ */}
+      <header
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          backdropFilter: "blur(24px)",
+          background: "rgba(5,8,10,0.92)",
+          position: "sticky", top: 0, zIndex: 100,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: "1400px", margin: "0 auto",
+            padding: "0 28px", height: "58px",
+            display: "flex", alignItems: "center", gap: "20px",
+          }}
+        >
+          {/* ロゴ */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
             <div style={{
-              width: "36px", height: "36px", borderRadius: "10px",
-              background: "linear-gradient(135deg, #0e1116, #1a232e)",
-              border: "1px solid rgba(56,189,248,0.25)",
+              width: "32px", height: "32px", borderRadius: "8px",
+              background: "linear-gradient(135deg, #0f3460, #38bdf8)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "18px", boxShadow: "0 0 20px rgba(56,189,248,0.1)",
+              fontSize: "15px", boxShadow: "0 0 16px rgba(56,189,248,0.3)",
             }}>
               📊
             </div>
             <div>
-              <p style={{ fontSize: "0.9rem", fontWeight: 800, color: "#f8fafc", letterSpacing: "0.02em", lineHeight: 1.2 }}>
-                Sentiment Predictor
+              <p style={{
+                fontSize: "0.88rem", fontWeight: 800,
+                color: "var(--text-primary)", letterSpacing: "0.01em", lineHeight: 1.2,
+              }}>
+                Sentiment Stock Predictor
               </p>
-              <p style={{ fontSize: "0.55rem", color: "#94a3b8", letterSpacing: "0.15em", textTransform: "uppercase" }}>
-                Minimal Futuristic
+              <p style={{ fontSize: "0.58rem", color: "var(--text-muted)", letterSpacing: "0.08em" }}>
+                AI-POWERED MARKET ANALYSIS
               </p>
             </div>
           </div>
 
           <HeaderSearchBar onSearch={handleSearch} isLoading={isLoading} />
 
-          <div style={{ marginLeft: "auto", display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* 右：クイック選択 */}
+          <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
+            {POPULAR_TICKERS.map((t) => (
+              <button
+                key={t.value}
+                id={`quick-${t.value.replace(/\./g, "_")}`}
+                type="button"
+                onClick={() => handleSearch(t.value)}
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  color: "var(--text-secondary)",
+                  fontSize: "0.7rem", fontWeight: 600,
+                  cursor: "pointer", transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(56,189,248,0.12)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "#38bdf8";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(56,189,248,0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)";
+                  (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.07)";
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div style={{ display: "flex", gap: "6px", flexShrink: 0 }}>
             <span style={{
-              background: "rgba(52,211,153,0.04)", border: "1px solid rgba(52,211,153,0.15)",
-              color: "#34d399", borderRadius: "8px", padding: "4px 14px", fontSize: "0.65rem", fontWeight: 900,
-              letterSpacing: "0.1em"
+              background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.22)",
+              color: "#34d399", borderRadius: "6px", padding: "3px 10px",
+              fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.05em",
+              display: "flex", alignItems: "center", gap: "4px",
             }}>
-              CONNECTED: GEMINI-1.5-PRO
+              <span style={{
+                width: "5px", height: "5px", background: "#34d399",
+                borderRadius: "50%", display: "inline-block", boxShadow: "0 0 6px #34d399",
+              }} className="animate-pulse-glow" />
+              GEMINI AI
             </span>
           </div>
         </div>
       </header>
 
-      <main style={{ maxWidth: "1360px", margin: "0 auto", padding: "40px", position: "relative", zIndex: 1 }}>
+      <main
+        style={{
+          maxWidth: "1400px", margin: "0 auto",
+          padding: "24px 28px 60px",
+          position: "relative", zIndex: 1,
+        }}
+      >
         {isLoading && <LoadingState />}
         {error && !isLoading && <ErrorState message={error} />}
         {!prediction && !isLoading && !error && <EmptyState />}
@@ -217,8 +300,19 @@ export default function DashboardPage() {
         )}
       </main>
 
-      <footer style={{ borderTop: "1px solid rgba(255,255,255,0.02)", padding: "24px 40px", textAlign: "center", color: "#94a3b8", fontSize: "0.65rem" }}>
-        <p style={{ letterSpacing: "0.05em" }}>SENTIMENT STOCK PREDICTOR &copy; 2026 ・ POWERED BY GEMINI AI</p>
+      <footer style={{
+        borderTop: "1px solid rgba(255,255,255,0.04)",
+        padding: "16px 28px", textAlign: "center",
+        color: "var(--text-muted)", fontSize: "0.7rem",
+        position: "relative", zIndex: 1,
+      }}>
+        <p>
+          Sentiment Stock Predictor &copy; 2026 —{" "}
+          <span className="neon-text-blue">Gemini AI</span> ・ TDnet 適時開示
+        </p>
+        <p style={{ marginTop: "3px", opacity: 0.55 }}>
+          本ツールは投資助言ではありません。投資判断は自己責任でお願いします。
+        </p>
       </footer>
     </div>
   );
@@ -226,30 +320,48 @@ export default function DashboardPage() {
 
 function LoadingState() {
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-20 text-center">
-      <div className="w-12 h-12 border-2 border-sky-500/10 border-t-sky-500 rounded-full animate-spin mx-auto mb-6" />
-      <p className="font-bold text-lg mb-2 text-slate-100">銘柄をAIが詳細解析中</p>
-      <p className="text-sm text-slate-400">一次情報（適時開示）と二次情報（SNS）のセンチメントを計算しています...</p>
+    <div className="glass-card" style={{ padding: "56px 32px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: "2px",
+        background: "linear-gradient(90deg, transparent, #38bdf8, #34d399, transparent)",
+        animation: "scan 2s linear infinite",
+      }} />
+      <div style={{
+        width: "52px", height: "52px",
+        border: "2px solid rgba(56,189,248,0.15)",
+        borderTopColor: "#38bdf8", borderRightColor: "#34d399",
+        borderRadius: "50%", margin: "0 auto 18px",
+      }} className="animate-spin-slow" />
+      <p style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: "1rem", marginBottom: "6px" }}>
+        解析中...
+      </p>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem" }}>
+        TDnet 適時開示を収集し、Gemini AI がセンチメント分析を実行しています
+      </p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="bg-slate-900/40 border border-rose-500/20 rounded-2xl p-10 text-center">
-      <p className="text-3xl mb-4">⚠️</p>
-      <p className="text-rose-400 font-bold mb-2">解析に失敗しました</p>
-      <p className="text-slate-400 text-sm">{message}</p>
+    <div className="glass-card glow-red" style={{ padding: "32px", textAlign: "center", borderColor: "rgba(244,63,94,0.3)" }}>
+      <p style={{ fontSize: "2rem", marginBottom: "10px" }}>⚠️</p>
+      <p style={{ color: "#f43f5e", fontWeight: 700, marginBottom: "8px" }}>エラーが発生しました</p>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>{message}</p>
     </div>
   );
 }
 
 function EmptyState() {
   return (
-    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-24 text-center">
-      <p className="text-4xl mb-6">📈</p>
-      <p className="font-bold text-xl mb-3 text-slate-100">銘柄レポートを生成します</p>
-      <p className="text-slate-400 text-sm max-w-sm mx-auto">最先端のAIが最新の適時開示情報と世論を統合し、即時にセンチメントを可視化します。</p>
+    <div className="glass-card" style={{ padding: "80px 32px", textAlign: "center" }}>
+      <p style={{ fontSize: "3rem", marginBottom: "16px" }}>📈</p>
+      <p style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "8px" }}>
+        銘柄を入力して分析を開始
+      </p>
+      <p style={{ color: "var(--text-secondary)", fontSize: "0.875rem" }}>
+        上部の検索バーにティッカーシンボルを入力してください
+      </p>
     </div>
   );
 }

@@ -119,6 +119,9 @@ export default function AIAnalysisEngine({
   direction,
   confidence,
   sentimentScore,
+  analysis,
+  scores,
+  judgment,
 }: AIAnalysisEngineProps) {
   const { displayed, done } = useTypingEffect(summary, 16);
   const dir = DIRECTION_LABELS[direction];
@@ -244,6 +247,11 @@ export default function AIAnalysisEngine({
             スコア {sentimentScore >= 0 ? "+" : ""}
             {sentimentScore.toFixed(3)}
           </span>
+          {judgment && (
+             <span className="neon-badge" style={{ fontSize: "0.78rem", background: "rgba(251,191,36,0.15)", borderColor: "#fbbf24", color: "#fbbf24" }}>
+               JUDGMENT: {judgment}
+             </span>
+          )}
         </div>
       </div>
 
@@ -337,6 +345,19 @@ export default function AIAnalysisEngine({
             />
           )}
         </p>
+
+        {done && analysis && (
+          <div style={{ marginTop: "24px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+            <div className="glass-card" style={{ padding: "16px", background: "rgba(255,255,255,0.02)" }}>
+              <p style={{ fontSize: "0.75rem", color: "#38bdf8", fontWeight: 800, marginBottom: "8px" }}>■ FUNDAMENTAL</p>
+              <p style={{ fontSize: "0.82rem", lineHeight: 1.6 }}>{analysis.fundamental_reason}</p>
+            </div>
+            <div className="glass-card" style={{ padding: "16px", background: "rgba(255,255,255,0.02)" }}>
+              <p style={{ fontSize: "0.75rem", color: "#34d399", fontWeight: 800, marginBottom: "8px" }}>■ SOCIAL INSIGHT</p>
+              <p style={{ fontSize: "0.82rem", lineHeight: 1.6 }}>{analysis.social_insight}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* フッター */}
