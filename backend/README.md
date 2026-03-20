@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-## 技術スタック
-=======
-## 技術スタックちゃんたちたち
->>>>>>> origin/beni
+## 技術スタックあ
 
 ### Backend (Python)
 - **データ取得・処理**: `yfinance`, `pandas`, `numpy`
